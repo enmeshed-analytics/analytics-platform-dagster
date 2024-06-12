@@ -19,3 +19,37 @@ def dbt_trade_barriers():
     # Create a table and insert the data
     con.execute('CREATE TABLE IF NOT EXISTS trade_barriers AS SELECT * FROM df')
     print("Data stored in the 'trade_barriers' table.")
+
+
+@asset()
+def ea_flood_areas():
+    # Get data from api and create dataframe
+    url = 'https://environment.data.gov.uk/flood-monitoring/id/floodAreas?_limit=9999'
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    df = pd.DataFrame(data['items'])
+
+    # Create a connection to a persistent DuckDB database file named "data"
+    con = duckdb.connect('data.duckdb')
+
+    # Create a table and insert the data
+    con.execute('CREATE TABLE IF NOT EXISTS ea_flood_areas AS SELECT * FROM df')
+    print("Data stored in the 'trade_barriers' table.")
+
+
+@asset(deps=[ea_flood_areas])
+def ea_floods():
+    # Get data from api and create dataframe
+    url = 'https://environment.data.gov.uk/flood-monitoring/id/floods'
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    df = pd.DataFrame(data['items'])
+
+    # Create a connection to a persistent DuckDB database file named "data"
+    con = duckdb.connect('data.duckdb')
+
+    # Create a table and insert the data
+    con.execute('CREATE TABLE IF NOT EXISTS ea_floods AS SELECT * FROM df')
+    print("Data stored in the 'trade_barriers' table.")
