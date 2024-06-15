@@ -139,7 +139,7 @@ def os_open_usrns():
                     logger.error(f"Error executing DuckDB operations: {e}")
                     raise
 
-                return gdf
+                return None
             else:
                 raise FileNotFoundError("No GeoPackage file found in the zip archive")
     except Exception as e:
@@ -147,4 +147,4 @@ def os_open_usrns():
         raise
 
 # Example usage
-# gdf = os_open_usrns()
+# os_open_usrns()
