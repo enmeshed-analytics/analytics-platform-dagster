@@ -64,7 +64,7 @@ def ea_floods():
     
 
 @asset()
-def load_geopackage_from_url():
+def os_open_usrns():
     
     db_file='openusrn.duckdb'
     num_rows=20
@@ -147,5 +147,4 @@ def load_geopackage_from_url():
         raise
 
 # Example usage
-
-gdf = load_geopackage_from_url()
+# gdf = os_open_usrns()
