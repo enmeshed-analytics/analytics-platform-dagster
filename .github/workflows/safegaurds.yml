@@ -1,0 +1,50 @@
+name: Ruff Linter Check & Env File Safeguard
+on: [push]
+jobs:
+  safeguards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install Ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+      - name: Run Ruff
+        run: ruff check
+      - name: Check for unwanted files
+        run: |
+          UNWANTED_FILES=(
+            "*.py[cod]" "*$py.class" "*.so" "__pycache__/" "*.egg-info" ".env"
+            "*.manifest" "*.spec" "*.log" "*.mo" "*.pot" "db.sqlite3"
+            "db.sqlite3-journal" ".ipynb_checkpoints" ".spyderproject" ".spyproject"
+            ".ropeproject" "*.sage.py" ".venv" "env/" "venv/" "ENV/" "env.bak/"
+            "venv.bak/" "instance/" ".webassets-cache" ".scrapy" "_build/" ".pybuilder/"
+            "target/" "profile_default/" "ipython_config.py" ".pdm.toml" "__pypackages__/"
+            ".mypy_cache/" ".dmypy.json" "dmypy.json" ".pyre/" ".pytype/" "cython_debug/"
+            ".streamlit/" "log_files/" "sm_permit/" "pyrightconfig.json" ".ruff_cache"
+            ".vscode" "creds.py" ".user.yml" "/logs" "/dbt/logs" "/dbt/target/"
+            "/dbt/dbt_packages/" "dev.duckdb" "variables.tf" "terraform.tfvars"
+            ".terraform.lock.hcl" "LICENSE.txt" "terraform-provider-aws_v5.50.0_x5"
+            "terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/5.50.0/darwin_arm64"
+            "terraform.tfstate" "terraform.tfstate.backup" "tfplan"
+            ".idea/" ".pytest_cache" ".vscode" "logs" "poetry.lock" "ruff.toml"
+          )
+          unwanted_found=false
+          for pattern in "${UNWANTED_PATTERNS[@]}"; do
+            if find . \( -type f -o -type d \) -name "$pattern" | grep -q .; then
+              if [ "$unwanted_found" = false ]; then
+                echo "Unwanted files and directories found:"
+                unwanted_found=true
+              fi
+              find . \( -type f -o -type d \) -name "$pattern"
+            fi
+          done
+          if [ "$unwanted_found" = true ]; then
+            exit 1
+          else
+            echo "No unwanted files or directories found."
+          fi
