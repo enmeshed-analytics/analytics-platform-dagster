@@ -1,16 +1,17 @@
-import json
 import requests
 import duckdb
 import pandas as pd
-import geopandas as gpd
 import zipfile
 import tempfile
 import os
 import time
+import fiona
 
-from shapely.ops import transform
+from utils.duckdb_helper import process_chunk
+from shapely import wkt
+from shapely.geometry import shape
 from loguru import logger
-from dagster import asset, AssetIn, OpExecutionContext
+from dagster import asset, OpExecutionContext
 
 def wait_10_seconds(context: OpExecutionContext):
     time.sleep(10)
@@ -71,27 +72,23 @@ def ea_floods(context: OpExecutionContext):
 
 @asset(deps=[ea_floods])
 def os_open_usrns(context: OpExecutionContext):
-    db_file='data.duckdb'
-    num_rows=20
+    db_file = 'data.duckdb'
+    chunk_size = 50000
     url = "https://api.os.uk/downloads/v1/products/OpenUSRN/downloads?area=GB&format=GeoPackage&redirect"
-    
+
     try:
         # Step 1: Retrieve the redirect URL
         response = requests.get(url)
         response.raise_for_status()
-        status_code = response.status_code
         redirect_url = response.url
-        logger.success(f"Success! Redirect URL is: {redirect_url}, Status Code is:{status_code}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error retrieving the redirect URL: {e}")
-        raise
-    
-    try:
+        logger.success(f"Success! Redirect URL is: {redirect_url}")
+
         # Step 2: Download the content from the redirect URL
         response = requests.get(redirect_url)
         response.raise_for_status()
         zip_content = response.content
-        logger.success("Zip found")
+        logger.success("Zip file downloaded")
+
         # Step 3: Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             # Step 4: Write the zip file to the temporary directory
@@ -110,41 +107,61 @@ def os_open_usrns(context: OpExecutionContext):
                     gpkg_file = os.path.join(temp_dir, file_name)
                     break
 
-            # Step 7: Load the specified number of rows from the GeoPackage into a GeoDataFrame
             if gpkg_file:
                 try:
-                    gdf = gpd.read_file(gpkg_file, rows=num_rows)
-                    gdf['geometry'] = gdf['geometry'].apply(lambda geom: transform(lambda x, y, z: (x, y), geom))
-                    gdf['geometry'] = gdf['geometry'].to_wkt()
-                    gdf.info()
+                    # Create a DuckDB connection
+                    with duckdb.connect(database=db_file, read_only=False) as conn:
+                        # Create the table if it doesn't exist
+                        conn.execute("""
+                            CREATE TABLE OR REPLACE open_usrns_table (
+                                geometry VARCHAR,
+                                street_type VARCHAR,
+                                usrn INTEGER
+                            )
+                        """)
+                        # Process the GeoPackage in chunks
+                        with fiona.open(gpkg_file, 'r') as src:
+                            features = []
+                            for i, feature in enumerate(src):
+                                try:
+                                    # Convert geometry to WKT string
+                                    geom = shape(feature['geometry'])
+                                    feature['properties']['geometry'] = wkt.dumps(geom)
+                                except Exception as e:
+                                    feature['properties']['geometry'] = None
+                                    logger.warning(f"Error converting geometry for feature {i}: {e}")
+                                features.append(feature['properties'])
+                                if len(features) == chunk_size:
+                                    # Process the chunk
+                                    df_chunk = pd.DataFrame(features)
+                                    process_chunk(df_chunk, conn)
+                                    logger.info(f"Processed features {i-chunk_size+1} to {i}")
+                                    features = []
+                            # Process any remaining features
+                            if features:
+                                df_chunk = pd.DataFrame(features)
+                                process_chunk(df_chunk, conn)
+                                logger.info(f"Processed remaining features up to {i}")
+                    logger.success("Data loaded into DuckDB successfully")
                 except Exception as e:
-                    logger.error(f"Error loading GeoPackage into GeoDataFrame: {e}")
+                    logger.error(f"Error processing GeoPackage: {e}")
                     raise
-
-                try:
-                    # Create a DuckDB connection with the specified file path using a context manager
-                    with duckdb.connect(database=db_file, read_only=False) as con:
-                        # Install and load the spatial extension
-                        con.execute('INSTALL spatial; LOAD spatial;')
-                        # Create a table from the GeoPackage file
-                        table_name = 'open_usrns_table'
-                        con.execute(f"CREATE TABLE IF NOT EXISTS {table_name} AS SELECT * FROM gdf;")
-                        # Query the table in the DuckDB database
-                        query = f"""
-                        SELECT usrn, geometry
-                        FROM {table_name}
-                        LIMIT 20;
-                        """
-                        result = con.execute(query).fetchdf()
-                        print(result)
-                except duckdb.Error as e:
-                    logger.error(f"Error executing DuckDB operations: {e}")
-                    raise
-
-                wait_10_seconds(context)
-                return None
             else:
                 raise FileNotFoundError("No GeoPackage file found in the zip archive")
     except Exception as e:
-        logger.error(f"Error processing the GeoPackage: {e}")
+        logger.error(f"An error ocurred: {e}")
         raise
+    wait_10_seconds(context)
+
+# @asset(deps=[ea_floods])
+# def london_data_store_meta():
+#     """
+#     Currently testing this to figure out the nested array structure in the dataframe columns
+#     """
+#     # Get data from api and create dataframe
+#     url = 'https://data.london.gov.uk/data.json'
+#     response = requests.get(url)
+#     response.raise_for_status()
+#     data = response.json()
+#     df = pd.DataFrame(data)
+#     df.to_parquet("df")
