@@ -1,0 +1,80 @@
+services:
+  postgis:
+    image: postgis/postgis:14-3.3
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dagster}
+      POSTGRES_USER: ${POSTGRES_USER:-dagster}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dagsterpassword}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dagster}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:RELEASE.2023-05-27T05-56-19Z
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-miniopassword}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    healthcheck :
+      test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
+      interval: 5s
+      retries: 1
+      start_period: 5s
+      timeout: 5s
+
+  minio-mc:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+
+      /usr/bin/mc mb dagster-logs;
+      /usr/bin/mc mb raw-data;
+      /usr/bin/mc mb clean-data;
+
+      echo 'MinIO setup completed successfully'
+      exit 0;
+      "
+   
+  dagster:
+    build:
+      context: images
+      dockerfile: Dockerfile.dagster-webserver
+    environment:
+      DAGSTER_HOME: /app
+      POSTGRES_DB: ${POSTGRES_DB:-dagster}
+      POSTGRES_USER: ${POSTGRES_USER:-dagster}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dagsterpassword}
+      POSTGRES_HOST: postgis
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-miniopassword}
+      MINIO_ENDPOINT: http://minio:9000
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-mc:
+        condition: service_completed_successfully
+    command: ["dagster", "dev"]
+
+volumes:
+  postgres_data:
+  minio_data:
