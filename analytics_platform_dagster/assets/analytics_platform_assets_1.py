@@ -7,7 +7,7 @@ import os
 import time
 import fiona
 
-from utils.duckdb_helper import process_chunk
+from ..utils.duckdb_helper import process_chunk
 from shapely import wkt
 from shapely.geometry import shape
 from loguru import logger
