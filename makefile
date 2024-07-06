@@ -8,7 +8,8 @@ add:
 	git add .
 
 commit:
-	git commit -m "Updates $(DATE)"
+	@read -p "Please enter an additional commit message: " msg; \
+	git commit -m "updates $(DATE) - $$msg"
 
 push:
 	git push

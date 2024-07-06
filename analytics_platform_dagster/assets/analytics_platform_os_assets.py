@@ -7,7 +7,7 @@ import os
 import time
 import fiona
 
-from ..utils.duckdb_helper import process_chunk
+from ..utils.duckdb_helper import process_chunk_os_usrn
 from shapely import wkt
 from shapely.geometry import shape
 from loguru import logger
@@ -18,62 +18,34 @@ def wait_10_seconds(context: OpExecutionContext):
     context.log.info("Waited for 10 seconds")
 
 @asset
-def dbt_trade_barriers(context: OpExecutionContext):
-    # Get data from api and create dataframe
-    url = 'https://data.api.trade.gov.uk/v1/datasets/market-barriers/versions/latest/data?format=json'
-    response = requests.get(url)
-    response.raise_for_status()
-    data = response.json()
-    df = pd.DataFrame(data['barriers'])
-
-    # Create a connection to a persistent DuckDB database file named "data"
-    con = duckdb.connect('data.duckdb')
-
-    # Create a table and insert the data
-    con.execute('CREATE TABLE IF NOT EXISTS trade_barriers AS SELECT * FROM df')
-    print("Data stored in the 'trade_barriers' table.")
-    wait_10_seconds(context)
-
-@asset(deps=[dbt_trade_barriers])
-def ea_flood_areas(context: OpExecutionContext):
-    # Get data from api and create dataframe
-    url = 'https://environment.data.gov.uk/flood-monitoring/id/floodAreas?_limit=9999'
-    response = requests.get(url)
-    response.raise_for_status()
-    data = response.json()
-    df = pd.DataFrame(data['items'])
-    print(df.head())
-
-    # Create a connection to a persistent DuckDB database file named "data"
-    con = duckdb.connect('data.duckdb')
-
-    # Create a table and insert the data
-    con.execute('CREATE TABLE IF NOT EXISTS ea_flood_areas AS SELECT * FROM df')
-    print("Data stored in the 'ea_flood_areas' table.")
-    wait_10_seconds(context)
-
-@asset(deps=[ea_flood_areas])
-def ea_floods(context: OpExecutionContext):
-    # Get data from api and create dataframe
-    url = 'https://environment.data.gov.uk/flood-monitoring/id/floods'
-    response = requests.get(url)
-    response.raise_for_status()
-    data = response.json()
-    df = pd.DataFrame(data['items'])
-    print(df.head())
-
-    # Create a connection to a persistent DuckDB database file named "data"
-    con = duckdb.connect('data.duckdb')
-
-    # Create a table and insert the data
-    con.execute('CREATE TABLE IF NOT EXISTS ea_floods AS SELECT * FROM df')
-    print("Data stored in the 'ea_floods' table.")
-    wait_10_seconds(context)
-
-@asset(deps=[ea_floods])
 def os_open_usrns(context: OpExecutionContext):
+    """
+    Download, process, and load OS Open USRN (Unique Street Reference Number) data into a DuckDB database.
+
+        This asset performs the following steps:
+        1. Retrieves the redirect URL for the OS Open USRN GeoPackage.
+        2. Downloads the zipped GeoPackage file.
+        3. Extracts the GeoPackage from the zip file.
+        4. Processes the GeoPackage data in batches.
+        5. Loads the processed data into a DuckDB table named 'open_usrns_table'.
+
+        The asset handles large datasets efficiently by processing the data in chunks
+        and converts geometries to Well-Known Text (WKT) format for storage.
+
+        Args:
+            context (OpExecutionContext): The execution context provided by Dagster.
+
+        Returns:
+            None
+
+        Raises:
+            FileNotFoundError: If no GeoPackage file is found in the downloaded zip archive.
+            Exception: For any errors during the download, extraction, or processing steps.
+    """
+
     db_file = 'data.duckdb'
-    chunk_size = 50000
+    # Could make the batch size larger
+    batch_size = 50000
     url = "https://api.os.uk/downloads/v1/products/OpenUSRN/downloads?area=GB&format=GeoPackage&redirect"
 
     try:
@@ -131,17 +103,17 @@ def os_open_usrns(context: OpExecutionContext):
                                     feature['properties']['geometry'] = None
                                     logger.warning(f"Error converting geometry for feature {i}: {e}")
                                 features.append(feature['properties'])
-                                if len(features) == chunk_size:
+                                if len(features) == batch_size:
                                     # Process the chunk
                                     df_chunk = pd.DataFrame(features)
-                                    process_chunk(df_chunk, conn)
-                                    logger.info(f"Processed features {i-chunk_size+1} to {i}")
+                                    process_chunk_os_usrn(df_chunk, conn)
+                                    logger.success(f"Processed features {i-batch_size+1} to {i}")
                                     features = []
                             # Process any remaining features
                             if features:
                                 df_chunk = pd.DataFrame(features)
-                                process_chunk(df_chunk, conn)
-                                logger.info(f"Processed remaining features up to {i}")
+                                process_chunk_os_usrn(df_chunk, conn)
+                                logger.success(f"Processed final chunk")
                     logger.success("Data loaded into DuckDB successfully")
                 except Exception as e:
                     logger.error(f"Error processing GeoPackage: {e}")
@@ -152,16 +124,3 @@ def os_open_usrns(context: OpExecutionContext):
         logger.error(f"An error ocurred: {e}")
         raise
     wait_10_seconds(context)
-
-# @asset(deps=[ea_floods])
-# def london_data_store_meta():
-#     """
-#     Currently testing this to figure out the nested array structure in the dataframe columns
-#     """
-#     # Get data from api and create dataframe
-#     url = 'https://data.london.gov.uk/data.json'
-#     response = requests.get(url)
-#     response.raise_for_status()
-#     data = response.json()
-#     df = pd.DataFrame(data)
-#     df.to_parquet("df")
