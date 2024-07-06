@@ -64,4 +64,5 @@ def ea_floods(context: OpExecutionContext):
         logger.success("Data stored in the 'ea_floods' table.")
     except duckdb.Error:
         raise
+
     wait_10_seconds(context)

@@ -6,7 +6,7 @@ from .assets.analytics_platform_os_assets import os_open_usrns
 
 # Define jobs for different orgs and agencies
 env_agency = Definitions(
-    assets=[ea_flood_areas, ea_floods,],
+    assets=[ea_flood_areas, ea_floods],
     jobs=[ea_job_1]
 )
 
