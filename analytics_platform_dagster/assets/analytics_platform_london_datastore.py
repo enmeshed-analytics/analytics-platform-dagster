@@ -14,6 +14,8 @@ async def london_datastore():
     """
     Fetch data from London Datastore API, process files, and upload as parquet to S3.
     """
+    s3_bucket = 'your-s3-bucket-name'
+
     try:
         num_rows = 20
         url = f"https://data.london.gov.uk/api/action/package_search?rows={num_rows}"
@@ -30,7 +32,7 @@ async def london_datastore():
                         task = asyncio.create_task(process_file(session, result, resource))
                         tasks.append(task)
             await asyncio.gather(*tasks)
-        print(f"Finished processing all files. Output saved in S3 bucket: {S3_BUCKET_NAME}")
+        print(f"Finished processing all files. Output saved in S3 bucket: {s3_bucket}")
     except Exception as e:
         print(f"An error occurred in london_datastore: {str(e)}")
         raise
