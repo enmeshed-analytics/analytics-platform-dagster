@@ -64,6 +64,7 @@ services:
       MINIO_ENDPOINT: http://minio:9000
     volumes:
       - ./:/app
+      - ./dagster.local.yaml:/app/dagster.yaml
     ports:
       - "3000:3000"
     depends_on:
