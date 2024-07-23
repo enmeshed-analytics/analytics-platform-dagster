@@ -1,1 +1,1 @@
-# analytics_platform_dagster
+# Analytics Platform

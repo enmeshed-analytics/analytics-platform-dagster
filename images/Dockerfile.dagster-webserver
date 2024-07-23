@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir \
     pandas \
     geopandas \
     shapely \
-    loguru
-
+    loguru \
+    awswrangler
 
 # Expose the Dagster webserver port
 EXPOSE 3000

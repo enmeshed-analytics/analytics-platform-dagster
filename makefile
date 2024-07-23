@@ -1,5 +1,7 @@
 # Push to main quicker
 
+.PHONY: all add commit push
+
 DATE := $(shell date +%Y-%m-%d)
 
 all: add commit push

@@ -179,3 +179,5 @@ scripts/.build
 
 # other 
 df.parquet
+workspace.yaml
+quick_check.ipynb

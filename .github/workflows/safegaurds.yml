@@ -1,4 +1,4 @@
-name: Ruff Linter Check & Env File Safeguard
+name: Ruff Linter Check & Env Var Safeguard
 on: [push]
 jobs:
   safeguards:
