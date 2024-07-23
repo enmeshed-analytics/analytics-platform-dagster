@@ -113,7 +113,7 @@ def os_open_usrns(context: OpExecutionContext):
                             if features:
                                 df_chunk = pd.DataFrame(features)
                                 process_chunk_os_usrn(df_chunk, conn)
-                                logger.success(f"Processed final chunk")
+                                logger.success("Processed final chunk")
                     logger.success("Data loaded into DuckDB successfully")
                 except Exception as e:
                     logger.error(f"Error processing GeoPackage: {e}")
