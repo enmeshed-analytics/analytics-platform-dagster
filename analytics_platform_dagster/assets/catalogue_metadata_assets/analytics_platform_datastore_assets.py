@@ -1,14 +1,14 @@
 import requests
 import pandas as pd
 
-from ..utils.url_links import asset_urls
-from ..utils.io_manager import AwsWranglerDeltaLakeIOManager
+from ...utils.url_links import asset_urls
+from ...utils.io_manager import AwsWranglerDeltaLakeIOManager
 from dagster import asset, OpExecutionContext, Output
 
-@asset
+@asset(group_name="metadata_assets")
 def london_datastore(context: OpExecutionContext):
     """
-    tbc
+    London Datastore Metadata
     """
     try:
         url = asset_urls.get("london_data_store")

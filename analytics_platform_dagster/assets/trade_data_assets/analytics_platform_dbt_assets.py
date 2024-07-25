@@ -2,11 +2,11 @@ import pandas as pd
 import requests
 
 from dagster import asset, OpExecutionContext, Output
-from ..utils.url_links import asset_urls
-from ..utils.io_manager import AwsWranglerDeltaLakeIOManager
-from ..utils.dbt_trade_transform import normalise_data
+from ...utils.url_links import asset_urls
+from ...utils.io_manager import AwsWranglerDeltaLakeIOManager
+from ...utils.trade_data_helper.dbt_trade_transform import normalise_data
 
-@asset
+@asset(group_name="trade_assets")
 def dbt_trade_barriers(context: OpExecutionContext):
     """
     tbc
@@ -22,7 +22,7 @@ def dbt_trade_barriers(context: OpExecutionContext):
         context.log.error(f"Error in dbt_trade_barriers: {str(error)}")
         raise error
 
-@asset
+@asset(group_name="trade_assets")
 def dbt_trade_barriers_transform(context: OpExecutionContext, dbt_trade_barriers):
     """
     tbc
@@ -35,7 +35,7 @@ def dbt_trade_barriers_transform(context: OpExecutionContext, dbt_trade_barriers
         context.log.error(f"Error in dbt_trade_barriers: {str(error)}")
         raise error
 
-@asset
+@asset(group_name="trade_assets")
 def dbt_trade_barriers_delta_lake(context: OpExecutionContext, dbt_trade_barriers_transform):
     """
     tbc

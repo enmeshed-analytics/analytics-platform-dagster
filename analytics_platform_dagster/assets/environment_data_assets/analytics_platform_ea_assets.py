@@ -1,11 +1,11 @@
 import requests
 import pandas as pd
 
-from ..utils.url_links import asset_urls
-from ..utils.io_manager import AwsWranglerDeltaLakeIOManager
+from ...utils.url_links import asset_urls
+from ...utils.io_manager import AwsWranglerDeltaLakeIOManager
 from dagster import asset, OpExecutionContext, Output
 
-@asset
+@asset(group_name="environment_assets")
 def ea_flood_areas(context: OpExecutionContext):
     """
     tbc
@@ -27,10 +27,8 @@ def ea_flood_areas(context: OpExecutionContext):
     except Exception as error:
         context.log.error(f"Error in dbt_trade_barriers: {str(error)}")
         raise error
-    
 
-
-@asset
+@asset(group_name="environment_assets")
 def ea_floods(context: OpExecutionContext):
     """
     tbc
