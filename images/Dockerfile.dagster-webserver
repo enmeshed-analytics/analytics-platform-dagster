@@ -17,13 +17,18 @@ WORKDIR $DAGSTER_HOME
 
 # Install Dagster and dependencies
 RUN pip install --no-cache-dir \
+    awswrangler \
+    aioboto3 \
     dagster \
     dagster-webserver \
-    dagster-postgres \
+    dagster-aws \
+    dagster-graphql \
+    dagster-postgres  \
     dagster-docker \
     duckdb \
     pandas \
     geopandas \
+    fiona \
     shapely \
     loguru \
     awswrangler
