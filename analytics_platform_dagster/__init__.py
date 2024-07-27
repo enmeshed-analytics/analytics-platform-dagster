@@ -1,5 +1,3 @@
-import os
-
 from dagster import Definitions, load_assets_from_modules
 from .assets.location_data_assets import analytics_platform_os_assets
 from .assets.environment_data_assets import analytics_platform_ea_assets
