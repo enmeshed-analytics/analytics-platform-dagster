@@ -12,17 +12,17 @@ class ChargeDevice(BaseModel):
     rated_output_kw: str
     connector_type: Optional[str] = None
     devicenetworks: str
-    chargedevicemanufacturer: str
-    chargedevicemodel: str
+    chargedevicemanufacturer: Optional[str] = None
+    chargedevicemodel: Optional[str] = None
     publishstatusid: int
-    datecreated: datetime
-    dateupdated: datetime
+    datecreated: str
+    dateupdated: str
     deviceaccess: Optional[str] = None
     chargedevicestatus: str
     publishstatus: str
     devicevalidated: int
     recordmoderated: str
-    recordlastupdated: Optional[datetime] = None
+    recordlastupdated: Optional[str] = None
     recordlastupdatedby: Optional[str] = None
     paymentrequiredflag: str
     paymentdetails: Optional[str] = None

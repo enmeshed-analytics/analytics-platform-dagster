@@ -1,6 +1,6 @@
 import requests
 
-def return_api_data(url_link: str):
+def return_api_data_json(url_link: str):
     try:
         response = requests.get(url_link)
         response.raise_for_status()
