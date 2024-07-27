@@ -39,5 +39,3 @@
 #     df = df.drop('geo_point', axis=1)
     
 #     return df
-
-var = national_charge_point_data_bronze()
