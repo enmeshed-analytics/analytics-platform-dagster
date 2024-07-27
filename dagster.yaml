@@ -26,7 +26,7 @@ run_launcher:
   module: "dagster_aws.ecs"
   class: "EcsRunLauncher"
   config:
-    task_definition: "arn:aws:ecs:eu-west-2:381492035828:task-definition/DataStackProdDagsterJobRunnerTaskDefinition5058FC5B:4"
+    task_definition: "arn:aws:ecs:eu-west-2:381492035828:task-definition/DataStackProdDagsterJobRunnerTaskDefinition5058FC5B:5"
     run_resources:
       cpu: "512"
       memory: "2048"
