@@ -1,11 +1,11 @@
 import aiohttp
 import asyncio
 import pandas as pd
+import io
 
-from dagster import asset, OpExecutionContext, Output
-from ...utils.url_links import carbon_intensity_api_list
+from datetime import datetime
+from dagster import asset, AssetExecutionContext, AssetIn
 from ...models.energy_data_models.carbon_intensity_assets_model import CarbonIntensityResponse
-from ...utils.io_manager import AwsWranglerDeltaLakeIOManager
 
 API_ENDPOINT = "https://api.carbonintensity.org.uk/regional/regionid/"
 
@@ -17,7 +17,7 @@ async def fetch_data(session: aiohttp.ClientSession, region_id: int) -> CarbonIn
 
 async def fetch_all_data_async():
     async with aiohttp.ClientSession() as session:
-        tasks = [fetch_data(session, region_id) for region_id in carbon_intensity_api_list]
+        tasks = [fetch_data(session, region_id) for region_id in range(1, 18)]
         results = await asyncio.gather(*tasks)
     
     data = []
@@ -35,22 +35,53 @@ async def fetch_all_data_async():
         for item in region.data[0].generationmix:
             region_data[f"generationmix_{item.fuel}"] = item.perc
         data.append(region_data)
+
+    df = pd.DataFrame(data)
+    parquet_buffer = io.BytesIO()
+    df.to_parquet(parquet_buffer, engine='pyarrow')
+    parquet_bytes = parquet_buffer.getvalue()
     
-    return pd.DataFrame(data)
+    return parquet_bytes
 
-@asset(group_name="energy_assets")
-def fetch_carbon_data():
-    return asyncio.run(fetch_all_data_async())
+@asset(
+    group_name="energy_assets", 
+    io_manager_key="S3Parquet"
+    )
+def carbon_intensity_bronze(context: AssetExecutionContext):
+    """
+    Store carbon intensity data in Parquet in S3... 
+    """
+    data = asyncio.run(fetch_all_data_async())
+    return data
 
-@asset(group_name="energy_assets")
-def carbon_intensity_delta_lake(context: OpExecutionContext, fetch_carbon_data: pd.DataFrame):
+@asset(
+    group_name="energy_assets", 
+    io_manager_key="DeltaLake", 
+    metadata={"mode": "append"},
+    ins={"carbon_intensity_bronze": AssetIn("carbon_intensity_bronze")}
+    )
+def carbon_intensity_silver(context: AssetExecutionContext, carbon_intensity_bronze):
     """
     Store carbon intensity data in Delta Lake.
+    
+    Rename columns and add additonal information.
     """
-    try:
-        delta_io = AwsWranglerDeltaLakeIOManager("analytics-data-lake-bronze")
-        result = delta_io.handle_output(context, fetch_carbon_data)
-        return Output(result)
-    except Exception as error:
-        context.log.error(f"Error in carbon_intensity_delta_lake: {str(error)}")
-        raise
+    data = carbon_intensity_bronze
+    data = data.rename(columns={
+    'regionid': 'region_id',
+    'dnoregion': 'dno_region',
+    'shortname': 'short_name',
+    'from': 'start_period',
+    'to': 'end_period'
+    })
+    
+    # Add date_processed column
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    data['date_processed'] = current_time
+    
+    # Add asset_group column
+    asset_group = context.assets_def.group_names_by_key[context.asset_key]
+    context.log.info(f"Asset group: {asset_group}")
+    data['asset_group'] = asset_group
+
+    return data

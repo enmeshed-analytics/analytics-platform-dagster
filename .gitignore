@@ -181,3 +181,4 @@ scripts/.build
 df.parquet
 workspace.yaml
 quick_check.ipynb
+tmp*
