@@ -1,7 +1,7 @@
 
 from typing import Any
-from ...utils.requests_helper import stream_json
-from ...utils.url_links import asset_urls
+from ...utils.requests_helper.requests_helper import stream_json
+from ...utils.variables_helper.url_links import asset_urls
 # from ...models.infrastructure_data_models.national_charge_point_model import ChargeDeviceResponse
 from dagster import AssetExecutionContext, asset
 

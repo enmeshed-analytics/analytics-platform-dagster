@@ -2,8 +2,8 @@ import pandas as pd
 import requests
 
 from dagster import asset, OpExecutionContext, Output
-from ...utils.url_links import asset_urls
-from ...utils.io_manager import AwsWranglerDeltaLakeIOManager
+from ...utils.variables_helper.url_links import asset_urls
+from ...utils.io_manager_helper.io_manager import AwsWranglerDeltaLakeIOManager
 from ...utils.trade_data_helper.dbt_trade_transform import normalise_data
 
 @asset(group_name="trade_assets")

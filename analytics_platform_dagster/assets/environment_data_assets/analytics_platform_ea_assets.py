@@ -1,8 +1,8 @@
 import requests
 import pandas as pd
 
-from ...utils.url_links import asset_urls
-from ...utils.io_manager import AwsWranglerDeltaLakeIOManager
+from ...utils.variables_helper.url_links import asset_urls
+from ...utils.io_manager_helper.io_manager import AwsWranglerDeltaLakeIOManager
 from dagster import asset, OpExecutionContext, Output
 
 @asset(group_name="environment_assets")

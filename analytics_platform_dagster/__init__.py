@@ -7,7 +7,7 @@ from .assets.energy_data_assets import analytics_platform_carbon_intensity_asset
 from .assets.catalogue_metadata_assets import analytics_platform_datastore_assets
 from .assets.infrastructure_data_assets import analytics_platform_national_charge_points_assets
 
-from .utils.io_manager import S3ParquetManager, AwsWranglerDeltaLakeIOManager, S3JSONManager
+from .utils.io_manager_helper.io_manager import S3ParquetManager, AwsWranglerDeltaLakeIOManager, S3JSONManager
 
 from .jobs.analytics_platfom_jobs import (
     environment_job_1, 
