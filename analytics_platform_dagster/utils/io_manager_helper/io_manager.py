@@ -5,6 +5,7 @@ import awswrangler as wr
 import pandas as pd
 
 from datetime import datetime
+from typing import List, Dict
 from dagster import IOManager
 from botocore.exceptions import ClientError
 
@@ -76,6 +77,9 @@ class AwsWranglerDeltaLakeIOManager(IOManager):
 class S3JSONManager(IOManager):
     """
     IO manager to handle reading and json files to S3. 
+    
+    load_input method scans S3 bucket for latest file. 
+    
     """
     def __init__(self, bucket_name: str):
         if not bucket_name:
@@ -99,19 +103,65 @@ class S3JSONManager(IOManager):
         except (S3Error, Exception) as e:
             raise e
 
-    def load_input(self, context, object):
-        object_name = object
-        object_key = f"{object_name}.json"
+    def load_input(self, context) -> List[Dict]:
+        asset_name = context.asset_key.path[-1]
+        prefix = f"{asset_name}_"
         try:
+            # List objects in the bucket with the given prefix
+            response = self.aws_client.list_objects_v2(
+                Bucket=self.bucket_name,
+                Prefix=prefix
+            )
+
+            # Check if any objects were found
+            if 'Contents' not in response or not response['Contents']:
+                raise FileNotFoundError(f"No files found with prefix '{prefix}' in bucket '{self.bucket_name}'")
+
+            # Sort the objects by last modified date
+            sorted_objects = sorted(
+                response['Contents'],
+                key=lambda x: x['LastModified'],
+                reverse=True
+            )
+
+            # Get the latest object (first item after sorting)
+            latest_object = sorted_objects[0]
+            object_key = latest_object['Key']
+
+            # Get Json object from S3            
             response = self.aws_client.get_object(Bucket=self.bucket_name, Key=object_key)
             json_str = response['Body'].read().decode('utf-8')
-            return json.loads(json_str)
-        except (S3Error, Exception) as e:
+            json_data = json.loads(json_str)
+
+
+            context.log.info(f"Loaded latest Json file: s3://{self.bucket_name}/{object_key}")
+            # Return Json object
+            return json_data
+
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                raise FileNotFoundError(f"No files found with prefix '{prefix}' in bucket '{self.bucket_name}'")
+            else:
+                raise e
+        except Exception as e:
             raise e
+
+    # def load_input(self, context, object):
+    #     object_name = object
+    #     object_key = f"{object_name}.json"
+    #     try:
+    #         response = self.aws_client.get_object(Bucket=self.bucket_name, Key=object_key)
+    #         json_str = response['Body'].read().decode('utf-8')
+    #         return json.loads(json_str)
+    #     except (S3Error, Exception) as e:
+    #         raise e
 
 class S3ParquetManager(IOManager):
     """
     IO manager to handle reading and parquet files to S3. 
+    
+    load_input method scans S3 bucket for latest file. 
+    
     """
     def __init__(self, bucket_name: str):
         if not bucket_name:

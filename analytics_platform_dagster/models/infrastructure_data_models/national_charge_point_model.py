@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
 
 class GeoPoint(BaseModel):
     lon: float
@@ -41,7 +41,3 @@ class ChargeDevice(BaseModel):
     latitude: str
     longitude: str
     geo_point: GeoPoint
-
-class ChargeDeviceResponse(BaseModel):
-    total_count: int
-    results: List[ChargeDevice]

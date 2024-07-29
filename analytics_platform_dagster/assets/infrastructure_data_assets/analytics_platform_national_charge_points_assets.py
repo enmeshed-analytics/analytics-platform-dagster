@@ -1,10 +1,12 @@
 import json
+import pandas as pd
 
+from pydantic import ValidationError
 from typing import List, Dict
 from ...utils.requests_helper.requests_helper import stream_json, return_json
 from ...utils.variables_helper.url_links import asset_urls
-# from ...models.infrastructure_data_models.national_charge_point_model import ChargeDeviceResponse
-from dagster import AssetExecutionContext, asset
+from ...models.infrastructure_data_models.national_charge_point_model import ChargeDevice
+from dagster import AssetExecutionContext, AssetIn, asset
 
 DONWLOAD_LINK = asset_urls.get("national_charge_points")
 API_ENDPOINT = asset_urls.get("national_charge_points_api")
@@ -51,7 +53,8 @@ def national_charge_point_data_bronze(context: AssetExecutionContext) -> List[Di
     total_record_count = fetch_record_count()
     response_count = len(response)
     
-        # Compare counts using sets
+    # Compare counts using sets. 
+    # This checks that all the data was returned and we haven't double counted and/or lost records.
     if set([total_record_count]) == set([response_count]):
         context.log.info(f"Record counts match: {total_record_count}")
     else:
@@ -59,3 +62,38 @@ def national_charge_point_data_bronze(context: AssetExecutionContext) -> List[Di
 
     return response
 
+@asset(
+    group_name="infrastructure_assets", 
+    io_manager_key="DeltaLake", 
+    metadata={"mode": "overwrite"},
+    ins={"national_charge_point_data_bronze": AssetIn("national_charge_point_data_bronze")}
+    )
+def national_charge_point_data_silver(context: AssetExecutionContext, national_charge_point_data_bronze) -> pd.DataFrame:
+    """Write charge point data out to Delta Lake once Pydantic models has been validated
+    
+    Returns:
+        pd.DataFrame
+    
+    """
+    try:
+        # Create DataFrame directly from input data
+        df = pd.DataFrame(national_charge_point_data_bronze)
+        
+        # Validate a sample of 5% of the records against the Pydantic model
+        sample_size = int(len(df) * 0.05)  # 5% of records - increase or lower if needed (0.01 would be 1% for exmaple)
+        sample = df.sample(n=sample_size)
+                
+        for _, record in sample.iterrows():
+            try:
+                ChargeDevice.model_validate(record.to_dict())
+            except ValidationError as e:
+                context.log.warning(f"Validation error in sample: {e}")
+        
+        # Log some information about the DataFrame to check it all worked
+        context.log.info(f"Created DataFrame with {len(df)} rows and {len(df.columns)} columns")
+        context.log.info(f"DataFrame sample: {df.head(15)}")
+        return df
+    
+    except Exception as e:
+        context.log.error(f"Error processing data: {e}")
+        raise
