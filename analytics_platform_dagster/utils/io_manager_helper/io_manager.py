@@ -207,7 +207,8 @@ class S3ParquetManager(IOManager):
                 reverse=True
             )
 
-            # Get the latest object (first item after sorting)
+            # Get the latest object (first item after sorting
+            # Fetch the key which will be the filename that you need to look for
             latest_object = sorted_objects[0]
             object_key = latest_object['Key']
 
@@ -220,7 +221,7 @@ class S3ParquetManager(IOManager):
             df = pd.read_parquet(parquet_buffer)
 
             context.log.info(f"Loaded latest Parquet file: s3://{self.bucket_name}/{object_key}")
-            # Return DataFrame
+            # Return as a DataFrame
             return df
 
         except ClientError as e:

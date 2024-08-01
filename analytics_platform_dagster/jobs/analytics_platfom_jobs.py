@@ -9,7 +9,7 @@ environment_job_1 = define_asset_job(
 # Trade
 trade_job_1 = define_asset_job(
     name="trade_job_1",
-    selection=["dbt_trade_barriers", "dbt_trade_barriers_transform", "dbt_trade_barriers_delta_lake"]
+    selection=["dbt_trade_barriers_bronze"]
 )
 
 # Metadata

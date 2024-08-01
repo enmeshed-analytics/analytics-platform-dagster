@@ -182,3 +182,4 @@ df.parquet
 workspace.yaml
 quick_check.ipynb
 tmp*
+test.py

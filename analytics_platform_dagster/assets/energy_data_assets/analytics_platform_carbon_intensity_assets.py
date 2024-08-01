@@ -6,8 +6,9 @@ import io
 from datetime import datetime
 from dagster import asset, AssetExecutionContext, AssetIn
 from ...models.energy_data_models.carbon_intensity_assets_model import CarbonIntensityResponse
+from ...utils.variables_helper.url_links import asset_urls
 
-API_ENDPOINT = "https://api.carbonintensity.org.uk/regional/regionid/"
+API_ENDPOINT = asset_urls.get("carbon_intensity_api")
 
 async def fetch_data(session: aiohttp.ClientSession, region_id: int) -> CarbonIntensityResponse:
     url = f"{API_ENDPOINT}{region_id}"
