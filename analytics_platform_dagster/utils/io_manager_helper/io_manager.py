@@ -58,6 +58,7 @@ class AwsWranglerDeltaLakeIOManager(IOManager):
                 df=obj,
                 path=table_path,
                 mode=write_option,
+                schema_mode="overwrite", # INCLUDE AS A CONTEXT ARG AT SOME POINT LIKE FOR MODE ABOVE
                 s3_allow_unsafe_rename=True
             )
             context.log.info(f"Data written to Delta Lake table at {table_path}")
@@ -133,7 +134,6 @@ class S3JSONManager(IOManager):
             json_str = response['Body'].read().decode('utf-8')
             json_data = json.loads(json_str)
 
-
             context.log.info(f"Loaded latest Json file: s3://{self.bucket_name}/{object_key}")
             # Return Json object
             return json_data
@@ -145,16 +145,6 @@ class S3JSONManager(IOManager):
                 raise e
         except Exception as e:
             raise e
-
-    # def load_input(self, context, object):
-    #     object_name = object
-    #     object_key = f"{object_name}.json"
-    #     try:
-    #         response = self.aws_client.get_object(Bucket=self.bucket_name, Key=object_key)
-    #         json_str = response['Body'].read().decode('utf-8')
-    #         return json.loads(json_str)
-    #     except (S3Error, Exception) as e:
-    #         raise e
 
 class S3ParquetManager(IOManager):
     """

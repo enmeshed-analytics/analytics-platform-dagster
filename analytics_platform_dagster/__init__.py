@@ -11,7 +11,8 @@ from .utils.io_manager_helper.io_manager import S3ParquetManager, AwsWranglerDel
 
 from .jobs.analytics_platfom_jobs import (
     environment_job_1, 
-    trade_job_1, 
+    trade_job_1,
+    trade_job_1_daily, 
     metadata_job_1,
     energy_job_1,
     energy_job_1_daily, 
@@ -36,7 +37,8 @@ defs = Definitions(
     infrastructure_job_1,
     ], 
     schedules=[
-        energy_job_1_daily
+        energy_job_1_daily, 
+        trade_job_1_daily
         ],
     resources={
         "S3Parquet": S3ParquetManager(bucket_name="datastackprod-bronzedatabucket85c612b2-tjqgl6ahaks5"),

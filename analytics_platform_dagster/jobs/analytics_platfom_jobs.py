@@ -9,7 +9,14 @@ environment_job_1 = define_asset_job(
 # Trade
 trade_job_1 = define_asset_job(
     name="trade_job_1",
-    selection=["dbt_trade_barriers_bronze"]
+    selection=["dbt_trade_barriers_bronze", "dbt_trade_barriers_silver"]
+)
+
+trade_job_1_daily = ScheduleDefinition(
+    job=trade_job_1,
+    cron_schedule="0 0 * * *",  
+    execution_timezone="Europe/London",
+    name="trade_daily_schedule"
 )
 
 # Metadata
