@@ -13,7 +13,7 @@ trade_job_1 = define_asset_job(
 
 trade_job_1_daily = ScheduleDefinition(
     job=trade_job_1,
-    cron_schedule="0 0 * * *",
+    cron_schedule="0 1 * * *",
     execution_timezone="Europe/London",
     name="trade_daily_schedule",
 )
