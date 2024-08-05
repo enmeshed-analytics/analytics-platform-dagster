@@ -1,12 +1,15 @@
 from typing import List, Any, Optional
 from pydantic import BaseModel
 
+
 class Category(BaseModel):
     pass
+
 
 class OverseasRegion(BaseModel):
     id: str
     name: str
+
 
 class TradingBloc(BaseModel):
     code: str
@@ -14,12 +17,15 @@ class TradingBloc(BaseModel):
     overseas_regions: List[OverseasRegion]
     short_name: str
 
+
 class Country(BaseModel):
     name: str
     trading_bloc: Optional[TradingBloc] = None
 
+
 class Sector(BaseModel):
     name: str
+
 
 class Barrier(BaseModel):
     categories: List[Category]
@@ -36,9 +42,8 @@ class Barrier(BaseModel):
     title: str
     trading_bloc: Optional[str] = None
 
+
 class TradingBarriers(BaseModel):
     barriers: List[Barrier]
 
-    model_config = {
-        "extra": "ignore"
-    }
+    model_config = {"extra": "forbid"}
