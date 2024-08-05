@@ -19,7 +19,7 @@ def validate_model(entsog_data):
 
 
 @asset(group_name="energy_assets", io_manager_key="S3Json")
-def entsog_gas_data_bronze(context: AssetExecutionContext):
+def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
     """Put data in bronze bucket"""
     # Base URL
     base_url = "https://transparency.entsog.eu/api/v1/operationalData.json"

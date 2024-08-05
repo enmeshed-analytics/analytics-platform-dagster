@@ -5,7 +5,7 @@ from .assets.environment_data_assets import analytics_platform_ea_assets
 from .assets.trade_data_assets import analytics_platform_dbt_trade_barrier_assets
 from .assets.energy_data_assets import (
     analytics_platform_carbon_intensity_assets,
-    entsog_gas_assets,
+    entsog_uk_gas_assets,
 )
 from .assets.catalogue_metadata_assets import analytics_platform_datastore_assets
 from .assets.infrastructure_data_assets import (
@@ -37,7 +37,7 @@ defs = Definitions(
             analytics_platform_dbt_trade_barrier_assets,
             analytics_platform_carbon_intensity_assets,
             analytics_platform_national_charge_points_assets,
-            entsog_gas_assets,
+            entsog_uk_gas_assets,
         ]
     ),
     jobs=[
