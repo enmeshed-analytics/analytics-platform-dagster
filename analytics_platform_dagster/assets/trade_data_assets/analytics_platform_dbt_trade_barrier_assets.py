@@ -7,6 +7,7 @@ from ...utils.requests_helper.requests_helper import return_json
 from ...models.trade_data_models.trade_barriers_model import TradingBarriers
 from ...utils.variables_helper.url_links import asset_urls
 
+
 @op
 def validate_model(trade_barriers_data) -> None:
     """Validate json against pydantic model"""
@@ -18,10 +19,8 @@ def validate_model(trade_barriers_data) -> None:
             print(f"Field: {error['loc']}, Error: {error['msg']}")
         raise
 
-@asset(
-    group_name="trade_assets", 
-    io_manager_key="S3Json"
-    )
+
+@asset(group_name="trade_assets", io_manager_key="S3Json")
 def dbt_trade_barriers_bronze(context: AssetExecutionContext):
     """Load data into bronze bucket"""
     try:
@@ -34,53 +33,60 @@ def dbt_trade_barriers_bronze(context: AssetExecutionContext):
         print(f"Error in dbt_trade_barriers: {str(error)}")
         raise error
 
+
 @asset(
-    group_name="trade_assets", 
-    io_manager_key="DeltaLake", 
+    group_name="trade_assets",
+    io_manager_key="DeltaLake",
     metadata={"mode": "overwrite"},
-    ins={"dbt_trade_barriers_bronze": AssetIn("dbt_trade_barriers_bronze")}
-    )
-def dbt_trade_barriers_silver(context: AssetExecutionContext, dbt_trade_barriers_bronze ):
+    ins={"dbt_trade_barriers_bronze": AssetIn("dbt_trade_barriers_bronze")},
+)
+def dbt_trade_barriers_silver(
+    context: AssetExecutionContext, dbt_trade_barriers_bronze
+):
     """Load data into silver bucket"""
     data = dbt_trade_barriers_bronze
     trading_barriers = TradingBarriers.model_validate(data)
 
     flattened_data = []
-    
+
     for barrier in trading_barriers.barriers:
         barrier_dict = barrier.model_dump()
-        country = barrier_dict.pop('country')
-        trading_bloc = country.pop('trading_bloc', None)
-        sectors = barrier_dict.pop('sectors')
-        barrier_dict.pop('categories', None)
-        
+        country = barrier_dict.pop("country")
+        trading_bloc = country.pop("trading_bloc", None)
+        sectors = barrier_dict.pop("sectors")
+        barrier_dict.pop("categories", None)
+
         # Flatten country data
         barrier_dict.update(country)
-        
+
         # Flatten trading bloc data
         if trading_bloc:
             for key, value in trading_bloc.items():
-                if key != 'overseas_regions':
-                    barrier_dict[f'trading_bloc_{key}'] = value
-            
+                if key != "overseas_regions":
+                    barrier_dict[f"trading_bloc_{key}"] = value
+
             # Handle overseas regions
-            if 'overseas_regions' in trading_bloc:
-                overseas_regions = trading_bloc['overseas_regions']
-                barrier_dict['trading_bloc_overseas_regions'] = [region['name'] for region in overseas_regions]
-                barrier_dict['trading_bloc_overseas_region_ids'] = [region['id'] for region in overseas_regions]
-        
+            if "overseas_regions" in trading_bloc:
+                overseas_regions = trading_bloc["overseas_regions"]
+                barrier_dict["trading_bloc_overseas_regions"] = [
+                    region["name"] for region in overseas_regions
+                ]
+                barrier_dict["trading_bloc_overseas_region_ids"] = [
+                    region["id"] for region in overseas_regions
+                ]
+
         # Keep sectors as a list
-        barrier_dict['sectors'] = [sector['name'] for sector in sectors]
-        
+        barrier_dict["sectors"] = [sector["name"] for sector in sectors]
+
         flattened_data.append(barrier_dict)
-    
+
     # Create df
     df = pd.DataFrame(flattened_data)
-    
+
     # Minor data type transformations
     df = df.astype(str)
     df = df.fillna("N/A")
-    time_date_cols = ['last_published_on', 'reported_on' ]
+    time_date_cols = ["last_published_on", "reported_on"]
 
     for col in time_date_cols:
         if col in df.columns:
@@ -90,4 +96,3 @@ def dbt_trade_barriers_silver(context: AssetExecutionContext, dbt_trade_barriers
     context.log.info(f"Model Validation Successful {df.head(15)}")
 
     return df
-

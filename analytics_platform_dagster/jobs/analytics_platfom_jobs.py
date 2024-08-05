@@ -28,6 +28,7 @@ energy_job_1 = define_asset_job(
         "carbon_intensity_bronze",
         "carbon_intensity_silver",
         "entsog_gas_uk_data_bronze",
+        "entsog_gas_uk_data_silver",
     ],
 )
 

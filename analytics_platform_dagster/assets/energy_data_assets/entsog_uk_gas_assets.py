@@ -1,8 +1,9 @@
 import requests
+import pandas as pd
 
 from pydantic import ValidationError
 from ...models.energy_data_models.entsog_gas_data_assets_model import EntsogModel
-from dagster import AssetExecutionContext, asset, op
+from dagster import AssetExecutionContext, AssetIn, asset, op
 from datetime import datetime, timedelta
 
 
@@ -20,7 +21,7 @@ def validate_model(entsog_data):
 
 @asset(group_name="energy_assets", io_manager_key="S3Json")
 def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
-    """Put data in bronze bucket"""
+    """Put data in Bronze bucket"""
     # Base URL
     base_url = "https://transparency.entsog.eu/api/v1/operationalData.json"
     # Parameters that don't change
@@ -49,7 +50,7 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
         data = response.json()
         validated_data = data["operationalData"]
         validate_model(validated_data)
-
+        context.log.info(f"Success: {validated_data}")
         return validated_data
     except requests.RequestException as e:
         # Handle any requests-related errors
@@ -67,3 +68,27 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
         # Handle any other unexpected errors
         print(f"Unexpected error: {e}")
         raise
+
+
+@asset(
+    group_name="energy_assets",
+    io_manager_key="DeltaLake",
+    metadata={"mode": "append"},
+    ins={"entsog_gas_uk_data_bronze": AssetIn("entsog_gas_uk_data_bronze")},
+)
+def entsog_gas_uk_data_silver(
+    context: AssetExecutionContext, entsog_gas_uk_data_bronze
+):
+    """
+    Dump data into Silver bucket
+    """
+    data = entsog_gas_uk_data_bronze
+
+    if data:
+        try:
+            df = pd.DataFrame(data)
+            df = df.astype(str)
+            context.log.info(f"Success: {df.head}, {df.columns}")
+            return df
+        except Exception as e:
+            raise e

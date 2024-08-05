@@ -56,7 +56,7 @@ def national_charge_point_data_bronze(context: AssetExecutionContext) -> List[Di
     Fetches json data and compares with total record count to ensure that the correct amount of records was fetched.
 
     Returns:
-        A list of dictionaries
+        A json file in S3
     """
 
     response = fetch_national_charge_point_data()
@@ -91,7 +91,7 @@ def national_charge_point_data_silver(
     """Write charge point data out to Delta Lake once Pydantic models has been validated
 
     Returns:
-        pd.DataFrame
+        Delta Lake table in S3.
 
     """
     try:
