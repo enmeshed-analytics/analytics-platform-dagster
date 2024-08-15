@@ -19,7 +19,10 @@ trade_job_1_daily = ScheduleDefinition(
 )
 
 # Metadata
-metadata_job_1 = define_asset_job(name="metadata_job_1", selection=["london_datastore"])
+metadata_job_1 = define_asset_job(
+    name="metadata_job_1",
+    selection=["london_datastore_bronze", "london_datastore_silver"],
+)
 
 # Energy
 energy_job_1 = define_asset_job(
