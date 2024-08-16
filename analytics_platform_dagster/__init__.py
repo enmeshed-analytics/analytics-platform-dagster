@@ -31,7 +31,7 @@ from .jobs.analytics_platfom_jobs import (
 )
 
 slack_failure_sensor = make_slack_on_run_failure_sensor(
-    slack_token=getenv("SLACKBOT"),
+    slack_token=os.getenv("SLACKBOT"),
     channel="#pipelines",
 )
 
