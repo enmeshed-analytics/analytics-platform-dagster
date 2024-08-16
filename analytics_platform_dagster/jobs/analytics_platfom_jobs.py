@@ -2,7 +2,7 @@ from dagster import define_asset_job, ScheduleDefinition
 
 # Evironment
 environment_job_1 = define_asset_job(
-    name="environment_job_1", selection=["ea_floods", "ea_flood_areas"]
+    name="environment_job_1", selection=["ea_flood_areas_bronze", "ea_flood_areas_silver"]
 )
 
 # Trade

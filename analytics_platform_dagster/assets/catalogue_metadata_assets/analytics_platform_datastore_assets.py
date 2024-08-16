@@ -18,7 +18,12 @@ def london_datastore_bronze(context: AssetExecutionContext):
         response = requests.get(url)
         response.raise_for_status()
         data = json.loads(response.content)
-        context.log.info(f"There were: {len(data)} catalogue items.")
+
+        # Validate model
+        validate = response.json()
+        LondonDatastoreCatalogue.model_validate({"items": validate})
+
+        context.log.info(f"Model Validatred. There are: {len(data)} catalogue items.")
         return data
 
     except Exception as e:

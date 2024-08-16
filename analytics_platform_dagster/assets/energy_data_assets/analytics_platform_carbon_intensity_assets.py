@@ -73,7 +73,7 @@ def carbon_intensity_bronze(context: AssetExecutionContext):
 @asset(
     group_name="energy_assets",
     io_manager_key="DeltaLake",
-    metadata={"mode": "append"},
+    metadata={"mode": "overwrite"},
     ins={"carbon_intensity_bronze": AssetIn("carbon_intensity_bronze")},
 )
 def carbon_intensity_silver(context: AssetExecutionContext, carbon_intensity_bronze):
@@ -101,5 +101,6 @@ def carbon_intensity_silver(context: AssetExecutionContext, carbon_intensity_bro
     asset_group = context.assets_def.group_names_by_key[context.asset_key]
     context.log.info(f"Asset group: {asset_group}")
     data["asset_group"] = asset_group
-    context.log.info(f"{data}")
+    context.log.info(f"{data.head(10)}")
+    context.log.info(f"{data.columns}")
     return data

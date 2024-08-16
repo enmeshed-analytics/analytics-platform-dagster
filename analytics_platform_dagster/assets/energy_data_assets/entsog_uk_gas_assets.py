@@ -49,8 +49,10 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
         # Parse JSON and validate model
         data = response.json()
         validated_data = data["operationalData"]
+
         validate_model(validated_data)
         context.log.info(f"Success: {validated_data}")
+
         return validated_data
     except requests.RequestException as e:
         # Handle any requests-related errors
@@ -88,7 +90,8 @@ def entsog_gas_uk_data_silver(
         try:
             df = pd.DataFrame(data)
             df = df.astype(str)
-            context.log.info(f"Success: {df.head}, {df.columns}")
+            context.log.info(f"Success: {df.head(25)}")
+            context.log.info(f"Success: {df.columns}")
             return df
         except Exception as e:
             raise e
