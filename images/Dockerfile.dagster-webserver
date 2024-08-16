@@ -17,7 +17,7 @@ WORKDIR $DAGSTER_HOME
 
 # Install Dagster and dependencies
 RUN pip install --no-cache-dir \
-    awswrangler \
+    awswrangler[deltalake] \
     aioboto3 \
     dagster \
     dagster-webserver \
@@ -25,14 +25,13 @@ RUN pip install --no-cache-dir \
     dagster-graphql \
     dagster-postgres  \
     dagster-docker \
+    dagster-slack \
     duckdb \
     pandas \
     geopandas \
     fiona \
     shapely \
-    loguru \
-    awswrangler \
-    dagster-slack
+    loguru
 
 # Expose the Dagster webserver port
 EXPOSE 3000
