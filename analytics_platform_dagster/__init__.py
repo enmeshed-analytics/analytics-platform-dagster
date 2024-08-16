@@ -1,4 +1,4 @@
-from os import getenv
+import os
 from dagster import Definitions, load_assets_from_modules
 from dagster_slack import SlackResource, make_slack_on_run_failure_sensor
 
@@ -58,14 +58,14 @@ defs = Definitions(
     sensors=[slack_failure_sensor],
     resources={
         "S3Parquet": S3ParquetManager(
-            bucket_name=getenv("BRONZE_DATA_BUCKET")
+            bucket_name=os.getenv("BRONZE_DATA_BUCKET")
         ),
         "S3Json": S3JSONManager(
-            bucket_name=getenv("BRONZE_DATA_BUCKET")
+            bucket_name=os.getenv("BRONZE_DATA_BUCKET")
         ),
         "DeltaLake": AwsWranglerDeltaLakeIOManager(
-            bucket_name=getenv("SILVER_DATA_BUCKET")
+            bucket_name=os.getenv("SILVER_DATA_BUCKET")
         ),
-        "slack": SlackResource(token=getenv("SLACKBOT")),
+        "slack": SlackResource(token=os.getenv("SLACKBOT")),
     },
 )
