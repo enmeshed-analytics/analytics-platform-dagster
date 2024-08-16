@@ -77,6 +77,7 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
     io_manager_key="DeltaLake",
     metadata={"mode": "append"},
     ins={"entsog_gas_uk_data_bronze": AssetIn("entsog_gas_uk_data_bronze")},
+    required_resource_keys={"slack"}
 )
 def entsog_gas_uk_data_silver(
     context: AssetExecutionContext, entsog_gas_uk_data_bronze
@@ -92,6 +93,16 @@ def entsog_gas_uk_data_silver(
             df = df.astype(str)
             context.log.info(f"Success: {df.head(25)}")
             context.log.info(f"Success: {df.columns}")
+
+            # Send Slack message
+            context.resources.slack.get_client().chat_postMessage(
+                channel="#pipelines",
+                text=f"Hello! This is the Pied Pipeline of Hamelin speaking 🎶\n"
+                     f"ENTSOG Gas UK data successfully processed and stored in Silver bucket.\n"
+                     f"Shape: {df.shape}\n"
+                     f"Data Types:\n{df.dtypes}"
+            )
+
             return df
         except Exception as e:
             raise e

@@ -1,4 +1,6 @@
-from dagster import Definitions, load_assets_from_modules
+from os import getenv
+from dagster import Definitions, load_assets_from_modules, RunFailureSensorContext
+from dagster_slack import SlackResource, make_slack_on_run_failure_sensor
 
 from .assets.location_data_assets import analytics_platform_os_assets
 from .assets.environment_data_assets import analytics_platform_ea_flood_areas
@@ -28,6 +30,11 @@ from .jobs.analytics_platfom_jobs import (
     infrastructure_job_1,
 )
 
+slack_failure_sensor = make_slack_on_run_failure_sensor(
+    slack_token=getenv("SLACKBOT"),
+    channel="#pipelines",
+)
+
 defs = Definitions(
     assets=load_assets_from_modules(
         [
@@ -48,15 +55,17 @@ defs = Definitions(
         infrastructure_job_1,
     ],
     schedules=[energy_job_1_daily, trade_job_1_daily],
+    sensors=[slack_failure_sensor],
     resources={
         "S3Parquet": S3ParquetManager(
-            bucket_name="datastackprod-bronzedatabucket85c612b2-tjqgl6ahaks5"
+            bucket_name=getenv("BRONZE_DATA_BUCKET")
         ),
         "S3Json": S3JSONManager(
-            bucket_name="datastackprod-bronzedatabucket85c612b2-tjqgl6ahaks5"
+            bucket_name=getenv("BRONZE_DATA_BUCKET")
         ),
         "DeltaLake": AwsWranglerDeltaLakeIOManager(
-            bucket_name="datastackprod-silverdatabucket04c06b24-mrfdumn6njwe"
+            bucket_name=getenv("SILVER_DATA_BUCKET")
         ),
+        "slack": SlackResource(token=getenv("SLACKBOT")),
     },
 )
