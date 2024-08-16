@@ -1,5 +1,5 @@
 from os import getenv
-from dagster import Definitions, load_assets_from_modules, RunFailureSensorContext
+from dagster import Definitions, load_assets_from_modules
 from dagster_slack import SlackResource, make_slack_on_run_failure_sensor
 
 from .assets.location_data_assets import analytics_platform_os_assets
