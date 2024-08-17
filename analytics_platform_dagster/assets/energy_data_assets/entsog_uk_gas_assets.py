@@ -75,7 +75,7 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
 @asset(
     group_name="energy_assets",
     io_manager_key="DeltaLake",
-    metadata={"mode": "append"},
+    metadata={"mode": "overwrite"},
     ins={"entsog_gas_uk_data_bronze": AssetIn("entsog_gas_uk_data_bronze")},
     required_resource_keys={"slack"}
 )
