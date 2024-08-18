@@ -3,7 +3,10 @@ from dagster import Definitions, load_assets_from_modules
 from dagster_slack import SlackResource, make_slack_on_run_failure_sensor
 
 from .assets.location_data_assets import analytics_platform_os_assets
-from .assets.environment_data_assets import analytics_platform_ea_flood_areas
+from .assets.environment_data_assets import (
+    analytics_platform_ea_flood_areas,
+    analytics_platform_ea_flood_public_forecast
+)
 from .assets.trade_data_assets import analytics_platform_dbt_trade_barrier_assets
 from .assets.energy_data_assets import (
     analytics_platform_carbon_intensity_assets,
