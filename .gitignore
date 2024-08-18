@@ -177,9 +177,10 @@ scripts/.build
 # dbt .user files
 .user.yml
 
-# other 
+# other
 df.parquet
 workspace.yaml
 quick_check.ipynb
 tmp*
 test.py
+creds.py

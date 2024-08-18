@@ -30,11 +30,13 @@ from .jobs.analytics_platfom_jobs import (
     infrastructure_job_1,
 )
 
+# Slack Failure message sensor
 slack_failure_sensor = make_slack_on_run_failure_sensor(
     slack_token=os.getenv("SLACKBOT"),
     channel="#pipelines",
 )
 
+# Asset / job definitions as well as schedules / sensors / resources
 defs = Definitions(
     assets=load_assets_from_modules(
         [

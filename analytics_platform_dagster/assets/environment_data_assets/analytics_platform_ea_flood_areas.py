@@ -3,24 +3,30 @@ import pandas as pd
 
 from dagster import asset, AssetIn, AssetExecutionContext
 from ...models.environment_data_models.ea_flood_areas_model import EaFloodAreasResponse
+from ...utils.slack_messages.slack_message import with_slack_notification
+from ...utils.variables_helper.url_links import asset_urls
+
+API_ENDPOINT = asset_urls.get("ea_flood_areas")
 
 @asset(group_name="environment_data", io_manager_key="S3Json")
 def ea_flood_areas_bronze(context: AssetExecutionContext):
     """
     EA Flood Area data bronze bucket
     """
-    try:
-        url = "https://environment.data.gov.uk/flood-monitoring/id/floodAreas?_limit=9999"
-        if url:
-            response = requests.get(url)
-            response.raise_for_status()
-            result = response.content
-            EaFloodAreasResponse.model_validate_json(result)
-            context.log.info(f"Model Validated. Validated {len(result)} records")
-            data = response.json()
-            return data
-    except Exception as error:
-        raise error
+
+    if API_ENDPOINT:
+        try:
+            url = API_ENDPOINT
+            if url:
+                response = requests.get(url)
+                response.raise_for_status()
+                result = response.content
+                EaFloodAreasResponse.model_validate_json(result)
+                context.log.info(f"Model Validated. Validated {len(result)} records")
+                data = response.json()
+                return data
+        except Exception as error:
+            raise error
 
 @asset(
     group_name="environment_data",
@@ -28,6 +34,7 @@ def ea_flood_areas_bronze(context: AssetExecutionContext):
     metadata={"mode": "overwrite"},
     ins={"ea_flood_areas_bronze": AssetIn("ea_flood_areas_bronze")},
 )
+@with_slack_notification("Environment Agency Flood Area Data")
 def ea_flood_areas_silver(context: AssetExecutionContext, ea_flood_areas_bronze):
     """
     EA Flood Area data silver bucket

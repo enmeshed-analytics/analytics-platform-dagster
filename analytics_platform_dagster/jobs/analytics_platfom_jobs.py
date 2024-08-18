@@ -1,11 +1,12 @@
 from dagster import define_asset_job, ScheduleDefinition
 
-# Evironment
+# ENVIRONMENT
 environment_job_1 = define_asset_job(
-    name="environment_job_1", selection=["ea_flood_areas_bronze", "ea_flood_areas_silver"]
+    name="environment_job_1",
+    selection=["ea_flood_areas_bronze", "ea_flood_areas_silver"]
 )
 
-# Trade
+# TRADE
 trade_job_1 = define_asset_job(
     name="trade_job_1",
     selection=["dbt_trade_barriers_bronze", "dbt_trade_barriers_silver"],
@@ -18,13 +19,13 @@ trade_job_1_daily = ScheduleDefinition(
     name="trade_daily_schedule",
 )
 
-# Metadata
+# METADATA
 metadata_job_1 = define_asset_job(
     name="metadata_job_1",
     selection=["london_datastore_bronze", "london_datastore_silver"],
 )
 
-# Energy
+# ENERGY
 energy_job_1 = define_asset_job(
     name="energy_job_1",
     selection=[
@@ -42,7 +43,7 @@ energy_job_1_daily = ScheduleDefinition(
     name="energy_daily_schedule",
 )
 
-# Infrastructure
+# INFRASTRUCTURE
 infrastructure_job_1 = define_asset_job(
     name="infrastructure_job_1",
     selection=[

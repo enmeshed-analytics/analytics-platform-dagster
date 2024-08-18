@@ -8,6 +8,7 @@ from ...models.infrastructure_data_models.national_charge_point_model import (
     ChargeDevice,
 )
 from dagster import AssetExecutionContext, AssetIn, asset
+from ...utils.slack_messages.slack_message import with_slack_notification
 
 DONWLOAD_LINK = asset_urls.get("national_charge_points")
 API_ENDPOINT = asset_urls.get("national_charge_points_api")
@@ -85,6 +86,7 @@ def national_charge_point_data_bronze(context: AssetExecutionContext) -> List[Di
         )
     },
 )
+@with_slack_notification("National EV Charge Point Data")
 def national_charge_point_data_silver(
     context: AssetExecutionContext, national_charge_point_data_bronze
 ) -> pd.DataFrame:

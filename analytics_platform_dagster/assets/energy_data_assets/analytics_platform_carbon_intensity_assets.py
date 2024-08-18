@@ -9,6 +9,7 @@ from ...models.energy_data_models.carbon_intensity_assets_model import (
     CarbonIntensityResponse,
 )
 from ...utils.variables_helper.url_links import asset_urls
+from ...utils.slack_messages.slack_message import with_slack_notification
 
 API_ENDPOINT = asset_urls.get("carbon_intensity_api")
 
@@ -18,6 +19,8 @@ async def fetch_data(
 ) -> CarbonIntensityResponse:
     """
     Async function to fetch data and validate against model.
+
+    This calls the API end point for all available region_id numbers
     """
     url = f"{API_ENDPOINT}{region_id}"
     async with session.get(url) as response:
@@ -35,7 +38,10 @@ async def fetch_all_data_async():
         tasks = [fetch_data(session, region_id) for region_id in range(1, 18)]
         results = await asyncio.gather(*tasks)
 
+    # List to store data
     data = []
+
+    # Access data fields in model using dot notation
     for result in results:
         region = result.data[0]
         region_data = {
@@ -47,6 +53,8 @@ async def fetch_all_data_async():
             "intensity_forecast": region.data[0].intensity.forecast,
             "intensity_index": region.data[0].intensity.index,
         }
+
+        # Access nested data fields
         for item in region.data[0].generationmix:
             region_data[f"generationmix_{item.fuel}"] = item.perc
         data.append(region_data)
@@ -75,12 +83,14 @@ def carbon_intensity_bronze(context: AssetExecutionContext):
     io_manager_key="DeltaLake",
     metadata={"mode": "overwrite"},
     ins={"carbon_intensity_bronze": AssetIn("carbon_intensity_bronze")},
+    required_resource_keys={"slack"}
 )
+@with_slack_notification("UK Regional Carbon Intensity Data")
 def carbon_intensity_silver(context: AssetExecutionContext, carbon_intensity_bronze):
     """
-    Store carbon intensity data in Delta Lake...
+    Store carbon intensity data in Delta Lake.
 
-    Rename columns and add additonal information...
+    Rename columns and add additonal information.
     """
     data = carbon_intensity_bronze
     data = data.rename(

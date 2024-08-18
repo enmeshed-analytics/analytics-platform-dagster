@@ -6,7 +6,9 @@ from dagster import asset, op, AssetIn, AssetExecutionContext
 from ...utils.requests_helper.requests_helper import return_json
 from ...models.trade_data_models.trade_barriers_model import TradingBarriers
 from ...utils.variables_helper.url_links import asset_urls
+from ...utils.slack_messages.slack_message import with_slack_notification
 
+API_ENDPOINT = asset_urls.get("dbt_trading_bariers_asset")
 
 @op
 def validate_model(trade_barriers_data) -> None:
@@ -23,15 +25,17 @@ def validate_model(trade_barriers_data) -> None:
 @asset(group_name="trade_assets", io_manager_key="S3Json")
 def dbt_trade_barriers_bronze(context: AssetExecutionContext):
     """Load data into bronze bucket"""
-    try:
-        url = asset_urls.get("dbt_trading_bariers_asset")
-        data = return_json(url)
-        validate_model(data)
-        context.log.info("Model Validation Successful")
-        return data
-    except Exception as error:
-        print(f"Error in dbt_trade_barriers: {str(error)}")
-        raise error
+
+    if API_ENDPOINT:
+        try:
+            url = API_ENDPOINT
+            data = return_json(url)
+            validate_model(data)
+            context.log.info("Model Validation Successful")
+            return data
+        except Exception as error:
+            print(f"Error in dbt_trade_barriers: {str(error)}")
+            raise error
 
 
 @asset(
@@ -40,6 +44,7 @@ def dbt_trade_barriers_bronze(context: AssetExecutionContext):
     metadata={"mode": "overwrite"},
     ins={"dbt_trade_barriers_bronze": AssetIn("dbt_trade_barriers_bronze")},
 )
+@with_slack_notification("DBT Trade Barriers Data")
 def dbt_trade_barriers_silver(
     context: AssetExecutionContext, dbt_trade_barriers_bronze
 ):
