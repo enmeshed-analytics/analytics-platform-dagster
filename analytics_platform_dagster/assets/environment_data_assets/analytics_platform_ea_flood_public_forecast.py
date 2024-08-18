@@ -80,4 +80,9 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
                 output["ground_risk"] = source.ground
 
         df = pd.DataFrame([output])
+
+        df = df.astype(str)
+
+        df = df.fillna('None')
+
         return df
