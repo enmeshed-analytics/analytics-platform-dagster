@@ -85,6 +85,7 @@ def national_charge_point_data_bronze(context: AssetExecutionContext) -> List[Di
             "national_charge_point_data_bronze"
         )
     },
+    required_resource_keys={"slack"}
 )
 @with_slack_notification("National EV Charge Point Data")
 def national_charge_point_data_silver(

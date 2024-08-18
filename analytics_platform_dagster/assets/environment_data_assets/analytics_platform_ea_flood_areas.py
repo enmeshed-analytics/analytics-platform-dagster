@@ -33,6 +33,7 @@ def ea_flood_areas_bronze(context: AssetExecutionContext):
     io_manager_key="DeltaLake",
     metadata={"mode": "overwrite"},
     ins={"ea_flood_areas_bronze": AssetIn("ea_flood_areas_bronze")},
+    required_resource_keys={"slack"}
 )
 @with_slack_notification("Environment Agency Flood Area Data")
 def ea_flood_areas_silver(context: AssetExecutionContext, ea_flood_areas_bronze):

@@ -43,6 +43,7 @@ def dbt_trade_barriers_bronze(context: AssetExecutionContext):
     io_manager_key="DeltaLake",
     metadata={"mode": "overwrite"},
     ins={"dbt_trade_barriers_bronze": AssetIn("dbt_trade_barriers_bronze")},
+    required_resource_keys={"slack"}
 )
 @with_slack_notification("DBT Trade Barriers Data")
 def dbt_trade_barriers_silver(

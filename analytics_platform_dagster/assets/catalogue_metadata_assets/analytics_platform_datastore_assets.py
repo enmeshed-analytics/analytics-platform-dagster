@@ -42,6 +42,7 @@ def london_datastore_bronze(context: AssetExecutionContext):
     io_manager_key="DeltaLake",
     metadata={"mode": "overwrite"},
     ins={"london_datastore_bronze": AssetIn("london_datastore_bronze")},
+    required_resource_keys={"slack"}
 )
 @with_slack_notification("London Datastore Catalogue Data")
 def london_datastore_silver(context: AssetExecutionContext, london_datastore_bronze):
