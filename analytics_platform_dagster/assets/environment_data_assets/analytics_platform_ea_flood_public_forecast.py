@@ -37,7 +37,7 @@ def ea_flood_public_forecast_bronze(context: AssetExecutionContext):
     required_resource_keys={"slack"}
 )
 @with_slack_notification("Environment Agency Public Flood Forecast Data")
-def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_public_forecast_bronze) -> pd.DataFrame | None:
+def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_public_forecast_bronze):
     """
     EA Public Forecast flooding data silver bucket
     """

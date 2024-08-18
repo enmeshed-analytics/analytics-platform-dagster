@@ -49,6 +49,7 @@ defs = Definitions(
             analytics_platform_datastore_assets,
             analytics_platform_os_assets,
             analytics_platform_ea_flood_areas,
+            analytics_platform_ea_flood_public_forecast,
             analytics_platform_dbt_trade_barrier_assets,
             analytics_platform_carbon_intensity_assets,
             analytics_platform_national_charge_points_assets,
