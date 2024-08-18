@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
@@ -27,8 +27,8 @@ class PublicForecast(BaseModel):
 class Statement(BaseModel):
     amendments: str
     aoc_maps: List[str]
-    area_of_concern_url: HttpUrl
-    detailed_csv_url: HttpUrl
+    area_of_concern_url: str
+    detailed_csv_url: str
     flood_risk_trend: FloodRiskTrend
     future_forecast: str
     headline: str
@@ -36,8 +36,8 @@ class Statement(BaseModel):
     issued_at: datetime
     last_modified_at: datetime
     next_issue_due_at: datetime
-    pdf_url: HttpUrl
-    png_thumbnails_with_days_url: HttpUrl
+    pdf_url: str
+    png_thumbnails_with_days_url: str
     public_forecast: PublicForecast
     risk_areas: List[str]
     sources: List[Source]
