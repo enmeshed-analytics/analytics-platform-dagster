@@ -22,12 +22,15 @@ from .utils.io_manager_helper.io_manager import (
 
 from .jobs.analytics_platfom_jobs import (
     environment_job_1,
+    environment_job_1_daily,
     trade_job_1,
     trade_job_1_daily,
     metadata_job_1,
+    metadata_job_1_weekly,
     energy_job_1,
     energy_job_1_daily,
     infrastructure_job_1,
+    infrastructure_job_1_weekly
 )
 
 # Slack Failure message sensor
@@ -56,7 +59,13 @@ defs = Definitions(
         energy_job_1,
         infrastructure_job_1,
     ],
-    schedules=[energy_job_1_daily, trade_job_1_daily],
+    schedules=[
+        energy_job_1_daily,
+        environment_job_1_daily,
+        trade_job_1_daily,
+        infrastructure_job_1_weekly,
+        metadata_job_1_weekly
+    ],
     sensors=[slack_failure_sensor],
     resources={
         "S3Parquet": S3ParquetManager(

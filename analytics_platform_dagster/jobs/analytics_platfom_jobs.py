@@ -3,13 +3,28 @@ from dagster import define_asset_job, ScheduleDefinition
 # ENVIRONMENT
 environment_job_1 = define_asset_job(
     name="environment_job_1",
-    selection=["ea_flood_areas_bronze", "ea_flood_areas_silver"]
+    selection=[
+        "ea_flood_areas_bronze",
+        "ea_flood_areas_silver",
+        "ea_flood_public_forecast_bronze",
+        "ea_flood_public_forecast_silver"
+    ]
+)
+
+environment_job_1_daily = ScheduleDefinition(
+    job=environment_job_1,
+    cron_schedule="0 2 * * *",
+    execution_timezone="Europe/London",
+    name="environment_daily_schedule",
 )
 
 # TRADE
 trade_job_1 = define_asset_job(
     name="trade_job_1",
-    selection=["dbt_trade_barriers_bronze", "dbt_trade_barriers_silver"],
+    selection=[
+        "dbt_trade_barriers_bronze",
+        "dbt_trade_barriers_silver"
+    ]
 )
 
 trade_job_1_daily = ScheduleDefinition(
@@ -22,7 +37,17 @@ trade_job_1_daily = ScheduleDefinition(
 # METADATA
 metadata_job_1 = define_asset_job(
     name="metadata_job_1",
-    selection=["london_datastore_bronze", "london_datastore_silver"],
+    selection=[
+        "london_datastore_bronze",
+        "london_datastore_silver"
+    ]
+)
+
+metadata_job_1_weekly = ScheduleDefinition(
+    job=metadata_job_1,
+    cron_schedule="0 3 * * 1",
+    execution_timezone="Europe/London",
+    name="metatdata_weekly_schedule",
 )
 
 # ENERGY
@@ -33,7 +58,7 @@ energy_job_1 = define_asset_job(
         "carbon_intensity_silver",
         "entsog_gas_uk_data_bronze",
         "entsog_gas_uk_data_silver",
-    ],
+    ]
 )
 
 energy_job_1_daily = ScheduleDefinition(
@@ -49,5 +74,12 @@ infrastructure_job_1 = define_asset_job(
     selection=[
         "national_charge_point_data_bronze",
         "national_charge_point_data_silver",
-    ],
+    ]
+)
+
+infrastructure_job_1_weekly = ScheduleDefinition(
+    job=infrastructure_job_1,
+    cron_schedule="0 4 * * 1",
+    execution_timezone="Europe/London",
+    name="infrastructure_weekly_schedule",
 )
