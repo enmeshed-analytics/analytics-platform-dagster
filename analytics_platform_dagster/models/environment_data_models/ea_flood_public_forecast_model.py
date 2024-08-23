@@ -24,9 +24,17 @@ class PublicForecast(BaseModel):
     wales_forecast_welsh: str
     welsh_forecast: str
 
+class AocMap(BaseModel):
+    id: int
+    title: str
+
+class RiskArea(BaseModel):
+    id: int
+    statement_id: int
+
 class Statement(BaseModel):
     amendments: str
-    aoc_maps: List[str]
+    aoc_maps: Optional[List[AocMap]]
     area_of_concern_url: str
     detailed_csv_url: str
     flood_risk_trend: FloodRiskTrend
@@ -39,7 +47,7 @@ class Statement(BaseModel):
     pdf_url: str
     png_thumbnails_with_days_url: str
     public_forecast: PublicForecast
-    risk_areas: List[str]
+    risk_areas: Optional[List[RiskArea]]
     sources: List[Source]
 
 class FloodRiskData(BaseModel):
