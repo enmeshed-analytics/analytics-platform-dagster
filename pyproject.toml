@@ -1,8 +1,30 @@
+[tool.poetry]
+name = "analytics-platform-dagster"
+version = "0.1.0"
+description = ""
+authors = ["hello@enmeshed.dev"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+awswrangler = "^3.9.1"
+aioboto3 = "^13.1.1"
+dagster = "^1.8.8"
+dagster-webserver = "^1.8.8"
+dagster-aws = "^0.24.8"
+dagster-graphql = "^1.8.8"
+dagster-postgres = "^0.24.8"
+dagster-docker = "^0.24.8"
+dagster-slack = "^0.24.8"
+duckdb = "^1.1.1"
+deltalake = "^0.20.0"
+pandas = "^2.2.3"
+geopandas = "^1.0.1"
+fiona = "^1.10.1"
+shapely = "^2.0.6"
+aiohttp = "^3.10.5"
+
+
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
-[tool.dagster]
-module_name = "analytics_platform_dagster"
-
-
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

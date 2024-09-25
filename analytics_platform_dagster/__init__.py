@@ -5,7 +5,7 @@ from dagster_slack import SlackResource, make_slack_on_run_failure_sensor
 from .assets.location_data_assets import analytics_platform_os_assets
 from .assets.environment_data_assets import (
     analytics_platform_ea_flood_areas,
-    analytics_platform_ea_flood_public_forecast
+    analytics_platform_ea_flood_public_forecast,
 )
 from .assets.trade_data_assets import analytics_platform_dbt_trade_barrier_assets
 from .assets.energy_data_assets import (
@@ -33,12 +33,29 @@ from .jobs.analytics_platfom_jobs import (
     energy_job_1,
     energy_job_1_daily,
     infrastructure_job_1,
-    infrastructure_job_1_weekly
+    infrastructure_job_1_weekly,
 )
+
+
+def get_env_var(var_name: str) -> str:
+    """
+    Basic function to return environment variables with a proper error if None.
+
+    Args:
+        Var name
+
+    Returs:
+        Env var
+    """
+    value = os.getenv(var_name)
+    if value is None:
+        raise ValueError(f"Environment variable '{var_name}' is not set")
+    return value
+
 
 # Slack Failure message sensor
 slack_failure_sensor = make_slack_on_run_failure_sensor(
-    slack_token=os.getenv("SLACKBOT"),
+    slack_token=get_env_var("SLACKBOT"),
     channel="#pipelines",
 )
 
@@ -68,19 +85,15 @@ defs = Definitions(
         environment_job_1_daily,
         trade_job_1_daily,
         infrastructure_job_1_weekly,
-        metadata_job_1_weekly
+        metadata_job_1_weekly,
     ],
     sensors=[slack_failure_sensor],
     resources={
-        "S3Parquet": S3ParquetManager(
-            bucket_name=os.getenv("BRONZE_DATA_BUCKET")
-        ),
-        "S3Json": S3JSONManager(
-            bucket_name=os.getenv("BRONZE_DATA_BUCKET")
-        ),
+        "S3Parquet": S3ParquetManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
+        "S3Json": S3JSONManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "DeltaLake": AwsWranglerDeltaLakeIOManager(
-            bucket_name=os.getenv("SILVER_DATA_BUCKET")
+            bucket_name=get_env_var("SILVER_DATA_BUCKET")
         ),
-        "slack": SlackResource(token=os.getenv("SLACKBOT")),
+        "slack": SlackResource(token=get_env_var("SLACKBOT")),
     },
 )
