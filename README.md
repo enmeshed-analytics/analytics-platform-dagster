@@ -9,4 +9,5 @@ Data Lake setup for Enmeshed!
 >
 > Run dagster dev -m analytics_platform_dagster to develop locally.
 
-![image](https://github.com/user-attachments/assets/5aba2d3e-6ab5-4965-baa3-68caffb44afa)
+
+![Untitled-2024-09-24-1622-2](https://github.com/user-attachments/assets/ba0350e4-a605-4a1b-bd9c-df302955d314)
