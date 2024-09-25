@@ -36,3 +36,21 @@ git-commit:
 
 git-push:
 	git push
+
+# Local Dagster Dev Section
+# Make sure .venv is active
+# Sometimes you have to get rid of the dagster.yaml files for this to work
+.PHONY: dagster-dev
+dagster-dev:
+	@if [ ! -f .env ]; then \
+		echo "Error: .env file not found"; \
+		exit 1; \
+	fi
+	set -a && source .env && set +a && \
+	dagster dev -m analytics_platform_dagster
+
+# Run Streamlit Data Lake Checker Locally
+# Make sure .venv is active and you have run aws-vault exec <profile>
+.PHONY: run-st
+run-st:
+	cd streamlit_app && streamlit run main.py
