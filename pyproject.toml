@@ -23,6 +23,8 @@ geopandas = "^1.0.1"
 fiona = "^1.10.1"
 shapely = "^2.0.6"
 aiohttp = "^3.10.5"
+streamlit = "^1.38.0"
+ruff = "^0.6.7"
 
 
 [build-system]

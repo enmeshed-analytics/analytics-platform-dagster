@@ -184,3 +184,4 @@ quick_check.ipynb
 tmp*
 test.py
 creds.py
+.streamlit

@@ -3,9 +3,8 @@
 import requests
 import pandas as pd
 from io import BytesIO
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
 
 class UKPNLiveFault(BaseModel):
     IncidentReference: Optional[str] = None
