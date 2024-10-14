@@ -83,3 +83,18 @@ infrastructure_job_1_weekly = ScheduleDefinition(
     execution_timezone="Europe/London",
     name="infrastructure_weekly_schedule",
 )
+
+infrastructure_job_2 = define_asset_job(
+    name="infrastructure_job_2",
+    selection=[
+        "ukpn_live_faults_bronze",
+        "ukpn_live_faults_silver",
+    ]
+)
+
+infrastructure_job_2_daily = ScheduleDefinition(
+    job=infrastructure_job_2,
+    cron_schedule="0 7 * * *",
+    execution_timezone="Europe/London",
+    name="infrastructure_daily_schedule",
+)

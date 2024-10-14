@@ -7,7 +7,6 @@ from dagster import AssetExecutionContext, AssetIn, asset, op
 from datetime import datetime, timedelta
 from ...utils.slack_messages.slack_message import with_slack_notification
 
-
 @op
 def validate_model(entsog_data):
     """
@@ -20,7 +19,6 @@ def validate_model(entsog_data):
         for error in e.errors():
             print(f"Field: {error['loc']}, Error: {error['msg']}")
         raise
-
 
 @asset(group_name="energy_assets", io_manager_key="S3Json")
 def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
@@ -78,7 +76,6 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
         # Handle any other unexpected errors
         print(f"Unexpected error: {e}")
         raise
-
 
 @asset(
     group_name="energy_assets",

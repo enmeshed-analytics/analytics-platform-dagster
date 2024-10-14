@@ -15,6 +15,7 @@ from .assets.energy_data_assets import (
 from .assets.catalogue_metadata_assets import analytics_platform_datastore_assets
 from .assets.infrastructure_data_assets import (
     analytics_platform_national_charge_points_assets,
+    uk_power_networks_live_faults
 )
 
 from .utils.io_manager_helper.io_manager import (
@@ -34,6 +35,8 @@ from .jobs.analytics_platfom_jobs import (
     energy_job_1_daily,
     infrastructure_job_1,
     infrastructure_job_1_weekly,
+    infrastructure_job_2,
+    infrastructure_job_2_daily
 )
 
 
@@ -71,6 +74,8 @@ defs = Definitions(
             analytics_platform_carbon_intensity_assets,
             analytics_platform_national_charge_points_assets,
             entsog_uk_gas_assets,
+            uk_power_networks_live_faults
+
         ]
     ),
     jobs=[
@@ -79,6 +84,7 @@ defs = Definitions(
         metadata_job_1,
         energy_job_1,
         infrastructure_job_1,
+        infrastructure_job_2
     ],
     schedules=[
         energy_job_1_daily,
@@ -86,6 +92,7 @@ defs = Definitions(
         trade_job_1_daily,
         infrastructure_job_1_weekly,
         metadata_job_1_weekly,
+        infrastructure_job_2_daily
     ],
     sensors=[slack_failure_sensor],
     resources={

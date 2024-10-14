@@ -39,6 +39,7 @@ git-push:
 
 # Local Dagster Dev Section
 # Make sure .venv is active
+# Make sure you have set the correct variables in the .env file
 # Sometimes you have to get rid of the dagster.yaml files for this to work
 .PHONY: dagster-dev
 dagster-dev:

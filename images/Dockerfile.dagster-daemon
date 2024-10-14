@@ -32,7 +32,8 @@ RUN pip install --no-cache-dir \
     geopandas \
     fiona \
     shapely \
-    aiohttp
+    aiohttp \
+    openpyxl
 
 # Expose the Dagster daemon port
 EXPOSE 3000

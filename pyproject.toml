@@ -25,6 +25,7 @@ shapely = "^2.0.6"
 aiohttp = "^3.10.5"
 streamlit = "^1.38.0"
 ruff = "^0.6.7"
+openpyxl = "^3.1.5"
 
 
 [build-system]

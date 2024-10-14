@@ -9,4 +9,4 @@ Define all asset definitions here grouped in the correct category.
     - Trade data
     - Location data
     - Environment Data
-    - Catalogue Meta Data thinking of a clever way to use this to quickly process datastore data in large bulks
+    - Catalogue Meta Data
