@@ -99,6 +99,8 @@ def entsog_gas_uk_data_silver(
         try:
             df = pd.DataFrame(data)
             df = df.astype(str)
+
+            # Print info
             context.log.info(f"Success: {df.head(25)}")
             context.log.info(f"Success: {df.columns}")
             return df

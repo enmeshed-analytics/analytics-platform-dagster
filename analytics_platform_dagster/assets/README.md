@@ -7,6 +7,6 @@ Define all asset definitions here grouped in the correct category.
     - Energy data
     - Infrastructure data
     - Trade data
-    - Location data
+    - Location data - NEED TO WORK ON THIS ONE
     - Environment Data
     - Catalogue Meta Data

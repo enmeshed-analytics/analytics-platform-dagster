@@ -10,24 +10,28 @@ from ...models.infrastructure_data_models.national_charge_point_model import (
 from dagster import AssetExecutionContext, AssetIn, asset
 from ...utils.slack_messages.slack_message import with_slack_notification
 
-DONWLOAD_LINK = asset_urls.get("national_charge_points")
-API_ENDPOINT = asset_urls.get("national_charge_points_api")
-
-
 def fetch_record_count() -> int:
     """Returns sample of charge point data to verify total count
 
     Returns:
             int: The total count of records
-    """
+        """
 
-    if API_ENDPOINT is None:
+    # Fetch url
+    url = asset_urls.get("national_charge_points_api")
+    if url is None:
         raise ValueError("API_ENDPOINT can't be None")
 
     try:
-        api_endpoint = API_ENDPOINT
+        # Fetch data
+        api_endpoint = url
         json_data = return_json(api_endpoint)
+
         total_count = json_data.get("total_count")
+
+        if total_count is None:
+            raise ValueError("No Data")
+
         return total_count
     except Exception as error:
         raise error
@@ -40,11 +44,11 @@ def fetch_national_charge_point_data() -> List[Dict[str, Any]]:
         A list of dictionaries
     """
 
-    if DONWLOAD_LINK is None:
+    url = asset_urls.get("national_charge_points")
+    if url is None:
         raise ValueError("Download Link can't be None")
 
     try:
-        url = DONWLOAD_LINK
         return stream_json(url, set_chunk=5000)
     except Exception as error:
         raise error
@@ -101,7 +105,7 @@ def national_charge_point_data_silver(
         # Create DataFrame directly from input data
         df = pd.DataFrame(national_charge_point_data_bronze)
 
-        # Validate a sample of 5% of the records against the Pydantic model
+        # Validate a sample of 5% of the records against the Pydantic model - as this is a larger dataset
         sample_size = int(
             len(df) * 0.05
         )  # 5% of records - increase or lower if needed (0.01 would be 1% for exmaple)

@@ -11,9 +11,6 @@ from ...models.energy_data_models.carbon_intensity_assets_model import (
 from ...utils.variables_helper.url_links import asset_urls
 from ...utils.slack_messages.slack_message import with_slack_notification
 
-API_ENDPOINT = asset_urls.get("carbon_intensity_api")
-
-
 async def fetch_data(
     session: aiohttp.ClientSession, region_id: int
 ) -> CarbonIntensityResponse:
@@ -22,7 +19,11 @@ async def fetch_data(
 
     This calls the API end point for all available region_id numbers
     """
-    url = f"{API_ENDPOINT}{region_id}"
+    base = asset_urls.get("carbon_intensity_api")
+    if base is None:
+        raise ValueError("Could not load base url")
+
+    url = f"{base}{region_id}"
     async with session.get(url) as response:
         data = await response.json()
         return CarbonIntensityResponse.model_validate(data, strict=True)
@@ -81,7 +82,7 @@ def carbon_intensity_bronze(context: AssetExecutionContext):
 @asset(
     group_name="energy_assets",
     io_manager_key="DeltaLake",
-    metadata={"mode": "overwrite"},
+    metadata={"mode": "append"},
     ins={"carbon_intensity_bronze": AssetIn("carbon_intensity_bronze")},
     required_resource_keys={"slack"}
 )
@@ -111,6 +112,8 @@ def carbon_intensity_silver(context: AssetExecutionContext, carbon_intensity_bro
     asset_group = context.assets_def.group_names_by_key[context.asset_key]
     context.log.info(f"Asset group: {asset_group}")
     data["asset_group"] = asset_group
+
+    # Print info
     context.log.info(f"{data.head(10)}")
     context.log.info(f"{data.columns}")
     return data

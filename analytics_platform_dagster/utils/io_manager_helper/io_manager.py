@@ -43,7 +43,7 @@ class AwsWranglerDeltaLakeIOManager(IOManager):
 
     Uses AWSWrangler.
 
-    Best used with aws-vault for credentails access.
+    Best used with aws-vault for credential access.
     """
 
     def __init__(self, bucket_name: str):
@@ -63,8 +63,8 @@ class AwsWranglerDeltaLakeIOManager(IOManager):
             wr.s3.to_deltalake(
                 df=obj,
                 path=table_path,
-                mode=write_option,
-                schema_mode="overwrite",  # INCLUDE AS A CONTEXT ARG AT SOME POINT LIKE FOR MODE ABOVE
+                mode=write_option, # mode (str, optional) – append (Default), overwrite, ignore, error
+                schema_mode="overwrite",
                 s3_allow_unsafe_rename=True,
             )
             context.log.info(f"Data written to Delta Lake table at {table_path}")

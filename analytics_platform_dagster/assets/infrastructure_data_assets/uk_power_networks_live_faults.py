@@ -8,6 +8,7 @@ from ...models.infrastructure_data_models.ukpn_live_fault_model import UKPNLiveF
 from dagster import AssetExecutionContext, AssetIn, asset, op
 from datetime import datetime
 from ...utils.slack_messages.slack_message import with_slack_notification
+from ...utils.variables_helper.url_links import asset_urls
 
 @op
 def validate_model(fault_data):
@@ -28,7 +29,10 @@ def validate_model(fault_data):
 def ukpn_live_faults_bronze():
     try:
         # Make request
-        url = "https://ukpowernetworks.opendatasoft.com/api/explore/v2.1/catalog/datasets/ukpn-live-faults/exports/xlsx"
+        url = asset_urls.get("ukpn_live_faults")
+        if url is None:
+            raise ValueError("No url")
+
         params = {
             "lang": "en",
             "timezone": "Europe/London",

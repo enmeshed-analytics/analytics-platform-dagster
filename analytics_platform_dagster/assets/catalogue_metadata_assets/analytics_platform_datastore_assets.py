@@ -9,32 +9,32 @@ from ...models.catalogue_metadata_models.london_datastore import (
 from ...utils.slack_messages.slack_message import with_slack_notification
 from ...utils.variables_helper.url_links import asset_urls
 
-API_ENDPOINT = asset_urls.get("london_data_store")
-
-
 @asset(group_name="metadata_catalogues", io_manager_key="S3Json")
 def london_datastore_bronze(context: AssetExecutionContext):
     """
-    London Datastore Metadata bronze bucket
+    Load London Datastore Metadata bronze bucket
     """
 
-    if API_ENDPOINT:
-        try:
-            # Fetch json data
-            url = API_ENDPOINT
-            response = requests.get(url)
-            response.raise_for_status()
-            data = json.loads(response.content)
+    try:
+        # Fetch datastore data
+        url = asset_urls.get("london_data_store")
+        if url is None:
+            raise ValueError("URL for london_data_store is not found in asset_urls")
 
-            # Validate model
-            validate = response.json()
-            LondonDatastoreCatalogue.model_validate({"items": validate})
+        # Manage response
+        response = requests.get(url)
+        response.raise_for_status()
+        data = json.loads(response.content)
 
-            context.log.info(f"Model Validatred. There are: {len(data)} catalogue items.")
-            return data
+        # Validate model
+        validate = response.json()
+        LondonDatastoreCatalogue.model_validate({"items": validate})
 
-        except Exception as e:
-            raise e
+        context.log.info(f"Model Validatred. There are: {len(data)} catalogue items.")
+        return data
+
+    except Exception as e:
+        raise e
 
 
 @asset(
@@ -53,7 +53,7 @@ def london_datastore_silver(context: AssetExecutionContext, london_datastore_bro
     # Make sure bronze bucket data is read in
     input_data = london_datastore_bronze
 
-    # Load into Pydantic model - this makes accessing nested structures easier.
+    # Load back into Pydantic model - this makes accessing nested structures easier.
     validated = LondonDatastoreCatalogue.model_validate({"items": input_data})
 
     # list to store data pre dataframe

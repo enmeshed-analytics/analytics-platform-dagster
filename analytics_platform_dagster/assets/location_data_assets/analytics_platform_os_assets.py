@@ -1,6 +1,7 @@
 """
 Need to sort this for delta lake compatability
 and figure out if it's worth having the whole dataset given how big it is...
+could use spark for this one?
 """
 
 #import requests

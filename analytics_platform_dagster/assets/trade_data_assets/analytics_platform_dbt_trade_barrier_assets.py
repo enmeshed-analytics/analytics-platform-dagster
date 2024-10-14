@@ -26,9 +26,11 @@ def validate_model(trade_barriers_data) -> None:
 def dbt_trade_barriers_bronze(context: AssetExecutionContext):
     """Load data into bronze bucket"""
 
-    if API_ENDPOINT:
+    # Fetch url
+    url = asset_urls.get("dbt_trading_bariers_asset")
+
+    if url:
         try:
-            url = API_ENDPOINT
             data = return_json(url)
             validate_model(data)
             context.log.info("Model Validation Successful")
@@ -89,7 +91,7 @@ def dbt_trade_barriers_silver(
     # Create df
     df = pd.DataFrame(flattened_data)
 
-    # Minor data type transformations
+    # Minor datatype transformations
     df = df.astype(str)
     df = df.fillna("N/A")
     time_date_cols = ["last_published_on", "reported_on"]
@@ -98,6 +100,7 @@ def dbt_trade_barriers_silver(
         if col in df.columns:
             df[col] = pd.to_datetime(df[col])
 
+    # Log information
     context.log.info(f"Model Validation Successful {df.dtypes}")
     context.log.info(f"Model Validation Successful {df.head(15)}")
 

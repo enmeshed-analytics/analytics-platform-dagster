@@ -6,7 +6,7 @@ class GenerationMix(BaseModel):
     perc: Union[float, int]
 
 class Intensity(BaseModel):
-    forecast: int
+    forecast: Union[float, int]
     index: str
 
 class RegionData(BaseModel):
