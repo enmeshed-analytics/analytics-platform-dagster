@@ -1,7 +1,6 @@
 import boto3
 import streamlit as st
 import pandas as pd
-import json
 from typing import Tuple, Optional
 
 from deltalake import DeltaTable
