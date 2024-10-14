@@ -8,6 +8,8 @@ Data Lake setup for Enmeshed!
 > This project is in early stage development.
 >
 > Run dagster dev -m analytics_platform_dagster to develop locally.
+>
+> Or use the makefile and run make dagster-dev (you need to set up the .env file for this)
 
 > [!IMPORTANT]
 > To use Streamlit Data Lake Checker locally
