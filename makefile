@@ -1,5 +1,4 @@
 # Make the deployment of updated docker containers quick and easy in the future.
-
 # Docker and AWS section
 .PHONY: docker-login docker-build docker-tag docker-push docker-verify docker-all
 
@@ -37,10 +36,21 @@ git-commit:
 git-push:
 	git push
 
-# Local Dagster Dev Section
-# Make sure .venv is active
-# Make sure you have set the correct variables in the .env file
-# Sometimes you have to get rid of the dagster.yaml files for this to work
+# Local Development Environment
+# Make sure .venv is active and you have set the correct variables in the .env file
+.PHONY: dev-environment
+dev-env:
+	@if [ ! -f .env ]; then \
+		echo "Error: .env file not found"; \
+		exit 1; \
+	fi
+	tmux new-session -d -s dev-env \; \
+		send-keys 'set -a && source .env && set +a && dagster dev -m analytics_platform_dagster' C-m \; \
+		split-window -h \; \
+		send-keys 'cd streamlit_app && streamlit run main.py' C-m \; \
+		attach
+
+# Run Dagster only
 .PHONY: dagster-dev
 dagster-dev:
 	@if [ ! -f .env ]; then \
