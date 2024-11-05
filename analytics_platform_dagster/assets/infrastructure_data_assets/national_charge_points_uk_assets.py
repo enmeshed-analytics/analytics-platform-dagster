@@ -4,8 +4,8 @@ import pyarrow as pa
 import pandas as pd
 import io
 
-from typing import List, Dict, Any, Optional, Union
-from pydantic import BaseModel, ValidationError, ConfigDict, Field
+from typing import List, Dict, Any
+from pydantic import ValidationError
 from ...utils.variables_helper.url_links import asset_urls
 from dagster import AssetExecutionContext, AssetIn, asset
 from ...utils.slack_messages.slack_message import with_slack_notification
