@@ -31,7 +31,7 @@ def ukpn_live_faults_bronze():
         # Make request
         url = asset_urls.get("ukpn_live_faults")
         if url is None:
-            raise ValueError("No url")
+            raise ValueError("No url!")
 
         params = {
             "lang": "en",
@@ -58,6 +58,7 @@ def ukpn_live_faults_bronze():
 
     parquet_buffer = BytesIO()
     df.to_parquet(parquet_buffer, engine="pyarrow")
+    df = df.astype(str)
     parquet_bytes = parquet_buffer.getvalue()
 
     return parquet_bytes

@@ -3,10 +3,12 @@ import json
 import io
 import awswrangler as wr
 import pandas as pd
+import duckdb
+import pyarrow as pa
 
 from datetime import datetime
-from typing import List, Dict
-from dagster import IOManager
+from typing import List, Dict, Union, Any
+from dagster import IOManager, OutputContext, InputContext
 from botocore.exceptions import ClientError
 
 
@@ -244,4 +246,173 @@ class S3ParquetManager(IOManager):
             else:
                 raise e
         except Exception as e:
+            raise e
+
+
+class PartitionedDuckDBParquetManager(IOManager):
+    def __init__(self, bucket_name: str):
+        self.bucket_name = bucket_name
+        self.con = duckdb.connect(':memory:')
+        self._configure_duckdb()
+
+    def _configure_duckdb(self):
+        self.con.execute("INSTALL httpfs;")
+        self.con.execute("LOAD httpfs;")
+        self.con.execute("""
+            CREATE SECRET (
+                TYPE S3,
+                PROVIDER CREDENTIAL_CHAIN
+            );
+        """)
+
+    def _map_arrow_to_duckdb_type(self, arrow_type: Union[pa.DataType, pa.Field]) -> str:
+        """
+        Map Arrow types to DuckDB types, handling nested structures
+        """
+        # Handle list types
+        if isinstance(arrow_type, pa.ListType):
+            return 'JSON'
+
+        # Handle struct types
+        if isinstance(arrow_type, pa.StructType):
+            return 'JSON'
+
+        # Base type mapping
+        base_types = {
+            pa.string(): 'VARCHAR',
+            pa.int64(): 'BIGINT',
+            pa.int32(): 'INTEGER',
+            pa.float64(): 'DOUBLE',
+            pa.float32(): 'FLOAT',
+            pa.bool_(): 'BOOLEAN',
+            pa.date32(): 'DATE',
+            pa.timestamp('us'): 'TIMESTAMP'
+        }
+
+        # Get the specific type instance for comparison
+        for arrow_base_type, duckdb_type in base_types.items():
+            if isinstance(arrow_type, type(arrow_base_type)):
+                return duckdb_type
+
+        # Default to VARCHAR for unknown types
+        print(f"Unknown Arrow type {arrow_type}, defaulting to VARCHAR")
+        return 'VARCHAR'
+
+
+    def handle_output(self, context: OutputContext, obj: Any) -> None:
+        """
+        Handle partitioned output to S3, creating a new partition for each batch
+        """
+        if not hasattr(obj, '__iter__'):
+            raise TypeError("Expected an iterator or generator for batch processing")
+
+        asset_name = context.asset_key.path[-1]
+        base_path = f"s3://{self.bucket_name}/{asset_name}"
+        temp_table = f"temp_{asset_name}"
+
+        # Initialise on first batch
+        first_batch = True
+        batch_id = 0
+
+        for batch_table in obj:  # batch_table is a PyArrow Table
+            try:
+                if first_batch:
+                    # Log schema for debugging
+                    context.log.debug(f"Processing first batch with schema: {batch_table.schema}")
+
+                    # Create the temp table from first batch schema
+                    columns = []
+                    for field in batch_table.schema:
+                        duckdb_type = self._map_arrow_to_duckdb_type(field)
+                        columns.append(f"{field.name} {duckdb_type}")
+                        context.log.debug(f"Mapped {field.name} ({field.type}) -> {duckdb_type}")
+
+                    # Add metadata columns
+                    columns.extend([
+                        "batch_id INTEGER",
+                        "process_timestamp TIMESTAMP"
+                    ])
+
+                    # Create the table
+                    create_sql = f"""
+                        CREATE TABLE IF NOT EXISTS {temp_table} (
+                            {', '.join(columns)}
+                        );
+                    """
+                    context.log.debug(f"Creating table with SQL: {create_sql}")
+                    self.con.execute(create_sql)
+                    first_batch = False
+
+                # Register current batch
+                self.con.register('current_batch', batch_table)
+
+                # Insert with metadata
+                insert_sql = f"""
+                    INSERT INTO {temp_table}
+                    SELECT
+                        *,
+                        {batch_id} as batch_id,
+                        TIMESTAMP '{datetime.now()}' as process_timestamp
+                    FROM current_batch;
+                """
+                self.con.execute(insert_sql)
+
+                # Write partition
+                self.con.execute(f"""
+                    COPY (
+                        SELECT * FROM {temp_table}
+                        WHERE batch_id = {batch_id}
+                    )
+                    TO '{base_path}'
+                    (
+                        FORMAT PARQUET,
+                        PARTITION_BY (batch_id),
+                        OVERWRITE_OR_IGNORE
+                    );
+                """)
+
+                # Cleanup
+                self.con.execute(f"DELETE FROM {temp_table} WHERE batch_id = {batch_id};")
+                self.con.execute("DROP VIEW IF EXISTS current_batch;")
+
+                context.log.info(f"Successfully wrote batch {batch_id} to {base_path}/batch_id={batch_id}/")
+                batch_id += 1
+
+            except Exception as e:
+                context.log.error(f"Error processing batch {batch_id}: {str(e)}")
+                raise e
+
+    def load_input(self, context: InputContext) -> pa.Table:
+        """
+        Load from partitioned S3 data, with optional batch filtering
+        """
+        asset_name = context.asset_key.path[-1]
+        base_path = f"s3://{self.bucket_name}/{asset_name}"
+
+        try:
+            # Use glob pattern to read all partitions - TBC IF THIS WORKS THOUGH AND IF YOU'D WANT TO DO IT BASED ON THE SIZE!
+            return self.con.execute(f"""
+                SELECT * FROM read_parquet(
+                    '{base_path}/*/*.parquet',
+                    hive_partitioning=true
+                )
+                ORDER BY batch_id
+            """).fetch_arrow_table()
+        except Exception as e:
+            context.log.error(f"Error loading data from {base_path}: {str(e)}")
+            raise e
+
+    def load_partition(self, context: InputContext, batch_id: int) -> pa.Table:
+        """
+        Load a specific partition by batch_id
+        """
+        asset_name = context.asset_key.path[-1]
+        partition_path = f"s3://{self.bucket_name}/{asset_name}/batch_id={batch_id}"
+
+        try:
+            return self.con.execute(f"""
+                SELECT * FROM read_parquet('{partition_path}/*.parquet')
+            """).fetch_arrow_table()
+        except Exception as e:
+            context.log.error(f"Error loading partition {batch_id} from {partition_path}: {str(e)}")
             raise e

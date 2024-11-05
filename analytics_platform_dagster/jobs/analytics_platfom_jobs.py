@@ -72,8 +72,10 @@ energy_job_1_daily = ScheduleDefinition(
 infrastructure_job_1 = define_asset_job(
     name="infrastructure_job_1",
     selection=[
-        "national_charge_point_data_bronze",
-        "national_charge_point_data_silver",
+        "national_charge_point_london_bronze",
+        "national_charge_point_london_silver",
+        "national_charge_point_uk_bronze",
+        "national_charge_point_uk_silver",
     ]
 )
 

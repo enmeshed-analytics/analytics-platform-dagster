@@ -186,3 +186,4 @@ test.py
 creds.py
 .streamlit
 poetry.lock
+data_testing/

@@ -21,13 +21,15 @@ def validate_model(trade_barriers_data) -> None:
             print(f"Field: {error['loc']}, Error: {error['msg']}")
         raise
 
-
 @asset(group_name="trade_assets", io_manager_key="S3Json")
 def dbt_trade_barriers_bronze(context: AssetExecutionContext):
     """Load data into bronze bucket"""
 
     # Fetch url
     url = asset_urls.get("dbt_trading_bariers_asset")
+
+    if url is None:
+        raise ValueError("No url!")
 
     if url:
         try:
@@ -38,7 +40,6 @@ def dbt_trade_barriers_bronze(context: AssetExecutionContext):
         except Exception as error:
             print(f"Error in dbt_trade_barriers: {str(error)}")
             raise error
-
 
 @asset(
     group_name="trade_assets",

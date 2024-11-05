@@ -14,14 +14,16 @@ from .assets.energy_data_assets import (
 )
 from .assets.catalogue_metadata_assets import analytics_platform_datastore_assets
 from .assets.infrastructure_data_assets import (
-    analytics_platform_national_charge_points_assets,
-    uk_power_networks_live_faults
+    national_charge_points_london_assets,
+    uk_power_networks_live_faults,
+    national_charge_points_uk_assets
 )
 
 from .utils.io_manager_helper.io_manager import (
     S3ParquetManager,
     AwsWranglerDeltaLakeIOManager,
     S3JSONManager,
+    PartitionedDuckDBParquetManager
 )
 
 from .jobs.analytics_platfom_jobs import (
@@ -72,9 +74,10 @@ defs = Definitions(
             analytics_platform_ea_flood_public_forecast,
             analytics_platform_dbt_trade_barrier_assets,
             analytics_platform_carbon_intensity_assets,
-            analytics_platform_national_charge_points_assets,
+            national_charge_points_london_assets,
             entsog_uk_gas_assets,
-            uk_power_networks_live_faults
+            uk_power_networks_live_faults,
+            national_charge_points_uk_assets
 
         ]
     ),
@@ -98,6 +101,7 @@ defs = Definitions(
     resources={
         "S3Parquet": S3ParquetManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "S3Json": S3JSONManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
+        "PartitionedDuckDBManager": PartitionedDuckDBParquetManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "DeltaLake": AwsWranglerDeltaLakeIOManager(
             bucket_name=get_env_var("SILVER_DATA_BUCKET")
         ),
