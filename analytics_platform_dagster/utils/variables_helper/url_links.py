@@ -6,5 +6,6 @@ asset_urls = {
     "national_charge_point_london": "https://ukpowernetworks.opendatasoft.com/api/explore/v2.1/catalog/datasets/ozev-ukpn-national-chargepoint-register/exports/json?lang=en&timezone=Europe%2FLondon",
     "national_charge_point_uk": "http://chargepoints.dft.gov.uk/api/retrieve/registry/format/json",
     "carbon_intensity_api": "https://api.carbonintensity.org.uk/regional/regionid/",
-    "ukpn_live_faults": "https://ukpowernetworks.opendatasoft.com/api/explore/v2.1/catalog/datasets/ukpn-live-faults/exports/xlsx"
+    "ukpn_live_faults": "https://ukpowernetworks.opendatasoft.com/api/explore/v2.1/catalog/datasets/ukpn-live-faults/exports/xlsx",
+    "green_belt": "https://files.planning.data.gov.uk/dataset/green-belt.json",
 }

@@ -7,7 +7,7 @@ environment_job_1 = define_asset_job(
         "ea_flood_areas_bronze",
         "ea_flood_areas_silver",
         "ea_flood_public_forecast_bronze",
-        "ea_flood_public_forecast_silver"
+        "ea_flood_public_forecast_silver",
     ]
 )
 
@@ -16,6 +16,20 @@ environment_job_1_daily = ScheduleDefinition(
     cron_schedule="0 2 * * *",
     execution_timezone="Europe/London",
     name="environment_daily_schedule",
+)
+
+environment_job_2 = define_asset_job(
+    name="environment_job_2",
+    selection=[
+        "green_belt_bronze",
+        "green_belt_silver",
+    ]
+)
+environment_job_2_monthly = ScheduleDefinition(
+    job=environment_job_2,
+    cron_schedule="0 5 1 * *",
+    execution_timezone="Europe/London",
+    name="environment_monthly_schedule",
 )
 
 # TRADE

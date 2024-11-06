@@ -2,10 +2,10 @@ import os
 from dagster import Definitions, load_assets_from_modules
 from dagster_slack import SlackResource, make_slack_on_run_failure_sensor
 
-from .assets.location_data_assets import analytics_platform_os_assets
 from .assets.environment_data_assets import (
     analytics_platform_ea_flood_areas,
     analytics_platform_ea_flood_public_forecast,
+    green_belt
 )
 from .assets.trade_data_assets import analytics_platform_dbt_trade_barrier_assets
 from .assets.energy_data_assets import (
@@ -29,6 +29,8 @@ from .utils.io_manager_helper.io_manager import (
 from .jobs.analytics_platfom_jobs import (
     environment_job_1,
     environment_job_1_daily,
+    environment_job_2,
+    environment_job_2_monthly,
     trade_job_1,
     trade_job_1_daily,
     metadata_job_1,
@@ -69,7 +71,6 @@ defs = Definitions(
     assets=load_assets_from_modules(
         [
             analytics_platform_datastore_assets,
-            analytics_platform_os_assets,
             analytics_platform_ea_flood_areas,
             analytics_platform_ea_flood_public_forecast,
             analytics_platform_dbt_trade_barrier_assets,
@@ -77,12 +78,13 @@ defs = Definitions(
             national_charge_points_london_assets,
             entsog_uk_gas_assets,
             uk_power_networks_live_faults,
-            national_charge_points_uk_assets
-
+            national_charge_points_uk_assets,
+            green_belt
         ]
     ),
     jobs=[
         environment_job_1,
+        environment_job_2,
         trade_job_1,
         metadata_job_1,
         energy_job_1,
@@ -92,6 +94,7 @@ defs = Definitions(
     schedules=[
         energy_job_1_daily,
         environment_job_1_daily,
+        environment_job_2_monthly,
         trade_job_1_daily,
         infrastructure_job_1_weekly,
         metadata_job_1_weekly,

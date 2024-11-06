@@ -13,26 +13,6 @@ from ...models.infrastructure_data_models.national_charge_point_uk_model import 
     ChargeDeviceResponse,
 )
 
-# Get json helper - return as .json() and not .content
-def return_json(url_link: str) -> dict:
-    """
-    Simple json get request
-
-    Args:
-        Url (e.g. api endpoint): str
-
-    Returns:
-        json as bytes
-    """
-    try:
-        response = requests.get(url_link)
-        response.raise_for_status()
-        data = response.json()
-        return data
-    except requests.RequestException as error:
-        print(f"An error occurred: {error}")
-        raise
-
 # Create Arrow Schema creation of arrow table
 def create_arrow_schema() -> pa.Schema:
     """
@@ -234,7 +214,6 @@ def national_charge_point_uk_bronze(context: AssetExecutionContext):
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
-
         try:
             ChargeDeviceResponse.model_validate(data)
         except ValidationError as e:
