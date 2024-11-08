@@ -8,8 +8,6 @@ from ...models.trade_data_models.trade_barriers_model import TradingBarriers
 from ...utils.variables_helper.url_links import asset_urls
 from ...utils.slack_messages.slack_message import with_slack_notification
 
-API_ENDPOINT = asset_urls.get("dbt_trading_bariers_asset")
-
 @op
 def validate_model(trade_barriers_data) -> None:
     """Validate json against pydantic model"""

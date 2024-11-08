@@ -1,37 +1,50 @@
-import pandas as pd
+import polars as pl
+import io
 
 from ...utils.variables_helper.url_links import asset_urls
 from ...utils.requests_helper.requests_helper import return_json
 from ...models.environment_data_models.ea_flood_public_forecast_model import FloodRiskData
 from ...utils.slack_messages.slack_message import with_slack_notification
-
 from dagster import asset, AssetIn, AssetExecutionContext
+from pydantic import ValidationError
 
 
-@asset(group_name="environment_data", io_manager_key="S3Json")
+@asset(group_name="environment_data", io_manager_key="S3Parquet")
 def ea_flood_public_forecast_bronze(context: AssetExecutionContext):
     """
     EA Public Forecast flooding data bronze bucket
     """
 
     url = asset_urls.get("ea_flood_public_forecast")
+    if url is None:
+        raise ValueError("No url!")
 
-    if url:
+    try:
+        data = return_json(url)
+
+        # Validate data against model
+        validation_errors = []
         try:
-            # Fetch data
-            data = return_json(url)
-
-            # Validate data against model
             FloodRiskData.model_validate(data)
+        except ValidationError as e:
+            validation_errors = e.errors()
 
-            return data
-        except Exception as error:
-            raise error
+        df = pl.DataFrame(data)
+        context.log.info(f"Processed {len(df)} records with {len(validation_errors)} validation errors")
+
+        parquet_buffer = io.BytesIO()
+        df.write_parquet(parquet_buffer)
+        parquet_bytes = parquet_buffer.getvalue()
+
+        context.log.info("Successfully processed batch into Parquet format")
+        return parquet_bytes
+    except Exception as error:
+        raise error
 
 
 @asset(
     group_name="environment_data",
-    io_manager_key="DeltaLake",
+    io_manager_key="PolarsDeltaLake",
     metadata={"mode": "overwrite"},
     ins={"ea_flood_public_forecast_bronze": AssetIn("ea_flood_public_forecast_bronze")},
     required_resource_keys={"slack"}
@@ -46,7 +59,7 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
     data = ea_flood_public_forecast_bronze
 
     # Load data into model - to use dot notation further down
-    flood_risk_data =    FloodRiskData.model_validate(data)
+    flood_risk_data = FloodRiskData.model_validate(data)
 
     if flood_risk_data:
         statement = flood_risk_data.statement
@@ -79,10 +92,6 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
             if source.ground:
                 output["ground_risk"] = source.ground
 
-        df = pd.DataFrame([output])
-
-        df = df.astype(str)
-
-        df = df.fillna('None')
+        df = pl.DataFrame([output])
 
         return df

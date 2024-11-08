@@ -1,16 +1,16 @@
 import requests
-import pyarrow as pa
+import polars as pl
 import pandas as pd
+import os
 import io
-
 from typing import List, Dict, Any
 from pydantic import ValidationError
+
+from analytics_platform_dagster.assets.environment_data_assets import green_belt
 from ...utils.variables_helper.url_links import asset_urls
-from dagster import AssetExecutionContext, AssetIn, asset
+from dagster import AssetExecutionContext, asset, AssetIn
 from ...utils.slack_messages.slack_message import with_slack_notification
-from ...models.environment_data_models.green_belt_model import (
-    GreenBeltResponse,
-)
+from ...models.environment_data_models.green_belt_model import GreenBeltResponse
 
 @asset(
     group_name="environment_data",
@@ -33,17 +33,19 @@ def green_belt_bronze(context: AssetExecutionContext):
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
+        print(data)
         try:
             GreenBeltResponse.model_validate(data)
         except ValidationError as e:
             validation_errors = e.errors()
 
-        df = pd.DataFrame(data)
-        df = df.astype(str)
+        entities = data['entities']
+
+        df = pl.DataFrame(entities)
         context.log.info(f"Processed {len(df)} records with {len(validation_errors)} validation errors")
 
         parquet_buffer = io.BytesIO()
-        df.to_parquet(parquet_buffer, engine="pyarrow")
+        df.write_parquet(parquet_buffer)
         parquet_bytes = parquet_buffer.getvalue()
 
         context.log.info("Successfully processed batch into Parquet format")
@@ -53,9 +55,10 @@ def green_belt_bronze(context: AssetExecutionContext):
         context.log.error(f"Error processing data: {str(e)}")
         raise e
 
+
 @asset(
     group_name="environment_data",
-    io_manager_key="DeltaLake",
+    io_manager_key="PolarsDeltaLake",
     metadata={"mode": "overwrite"},
     ins={
         "green_belt_bronze": AssetIn(
@@ -65,19 +68,9 @@ def green_belt_bronze(context: AssetExecutionContext):
     required_resource_keys={"slack"}
 )
 @with_slack_notification("GB Green Belt")
-def green_belt_silver(
-    context: AssetExecutionContext, green_belt_bronze
-) -> pd.DataFrame:
+def green_belt_silver(context: AssetExecutionContext, green_belt_bronze)  -> pl.DataFrame:
     """
-    Write green belt data out to Delta Lake
-
-    Returns:
-        Delta Lake table in S3.
+    Write green belt data directly to S3 using Polars
     """
-    try:
-        df = pd.DataFrame(green_belt_bronze)
-        return df
-
-    except Exception as e:
-        context.log.error(f"Error processing data: {e}")
-        raise
+    df = pl.DataFrame(green_belt_bronze)
+    return df

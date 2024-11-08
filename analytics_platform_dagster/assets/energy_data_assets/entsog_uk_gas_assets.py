@@ -1,11 +1,13 @@
 import requests
-import pandas as pd
+import polars as pl
+import io
 
 from pydantic import ValidationError
 from ...models.energy_data_models.entsog_gas_data_assets_model import EntsogModel
 from dagster import AssetExecutionContext, AssetIn, asset, op
 from datetime import datetime, timedelta
 from ...utils.slack_messages.slack_message import with_slack_notification
+from ...utils.variables_helper.url_links import asset_urls
 
 @op
 def validate_model(entsog_data):
@@ -20,13 +22,15 @@ def validate_model(entsog_data):
             print(f"Field: {error['loc']}, Error: {error['msg']}")
         raise
 
-@asset(group_name="energy_assets", io_manager_key="S3Json")
+@asset(group_name="energy_assets", io_manager_key="S3Parquet")
 def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
     """
     Put data in Bronze bucket
     """
     # Base URL
-    base_url = "https://transparency.entsog.eu/api/v1/operationalData.json"
+    base_url = asset_urls.get("entsog_gas")
+    if base_url is None:
+        raise ValueError("Could not load base url")
 
     # Parameters that don't change - this will get you gas flows in and out of the UK
     params = {
@@ -52,14 +56,21 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
         response = requests.get(base_url, params=params)
         response.raise_for_status()
 
-        # Parse JSON and validate model
+        # Parse data and validate model
         data = response.json()
         validated_data = data["operationalData"]
         validate_model(validated_data)
-
         context.log.info(f"Success: {validated_data}")
 
-        return validated_data
+        df = pl.DataFrame(validated_data, infer_schema_length=None)
+
+        parquet_buffer = io.BytesIO()
+        df.write_parquet(parquet_buffer)
+
+        parquet_bytes = parquet_buffer.getvalue()
+
+        return parquet_bytes
+
     except requests.RequestException as e:
         # Handle any requests-related errors
         print(f"Error fetching data: {e}")
@@ -79,7 +90,7 @@ def entsog_gas_uk_data_bronze(context: AssetExecutionContext):
 
 @asset(
     group_name="energy_assets",
-    io_manager_key="DeltaLake",
+    io_manager_key="PolarsDeltaLake",
     metadata={"mode": "overwrite"},
     ins={"entsog_gas_uk_data_bronze": AssetIn("entsog_gas_uk_data_bronze")},
     required_resource_keys={"slack"}
@@ -93,16 +104,24 @@ def entsog_gas_uk_data_silver(
     """
 
     # Access data in the Bronze delta lake
-    data = entsog_gas_uk_data_bronze
+    data = pl.DataFrame(entsog_gas_uk_data_bronze)
 
-    if data:
-        try:
-            df = pd.DataFrame(data)
-            df = df.astype(str)
+    try:
+        df = pl.DataFrame(data)
 
-            # Print info
-            context.log.info(f"Success: {df.head(25)}")
-            context.log.info(f"Success: {df.columns}")
-            return df
-        except Exception as e:
-            raise e
+        # Log initial schema
+        context.log.info(f"Initial schema: {df.schema}")
+
+        null_cols = [name for name, dtype in df.schema.items() if dtype == pl.Null]
+
+        if null_cols:
+            df = df.with_columns([
+                pl.col(col).cast(pl.Utf8).fill_null("") for col in null_cols
+            ])
+
+        # Log final schema
+        context.log.info(f"Final schema: {df.schema}")
+        context.log.info(f"Sample data: {df.head(5)}")
+        return df
+    except Exception as e:
+        raise e

@@ -23,7 +23,8 @@ from .utils.io_manager_helper.io_manager import (
     S3ParquetManager,
     AwsWranglerDeltaLakeIOManager,
     S3JSONManager,
-    PartitionedDuckDBParquetManager
+    PartitionedDuckDBParquetManager,
+    PolarsDeltaLakeIOManager
 )
 
 from .jobs.analytics_platfom_jobs import (
@@ -105,9 +106,8 @@ defs = Definitions(
         "S3Parquet": S3ParquetManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "S3Json": S3JSONManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "PartitionedDuckDBManager": PartitionedDuckDBParquetManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
-        "DeltaLake": AwsWranglerDeltaLakeIOManager(
-            bucket_name=get_env_var("SILVER_DATA_BUCKET")
-        ),
+        "DeltaLake": AwsWranglerDeltaLakeIOManager(bucket_name=get_env_var("SILVER_DATA_BUCKET")),
+        "PolarsDeltaLake": PolarsDeltaLakeIOManager(bucket_name=get_env_var("SILVER_DATA_BUCKET")),
         "slack": SlackResource(token=get_env_var("SLACKBOT")),
     },
 )

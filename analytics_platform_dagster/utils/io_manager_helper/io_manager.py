@@ -3,11 +3,13 @@ import json
 import io
 import awswrangler as wr
 import pandas as pd
+import polars as pl
 import duckdb
 import pyarrow as pa
+import os
 
 from datetime import datetime
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union, Any, Optional
 from dagster import IOManager, OutputContext, InputContext
 from botocore.exceptions import ClientError
 
@@ -82,7 +84,6 @@ class AwsWranglerDeltaLakeIOManager(IOManager):
             return df
         except (DeltaLakeReadError, Exception) as e:
             raise e
-
 
 class S3JSONManager(IOManager):
     """
@@ -163,7 +164,6 @@ class S3JSONManager(IOManager):
         except Exception as e:
             raise e
 
-
 class S3ParquetManager(IOManager):
     """
     IO manager to handle reading and parquet files to S3.
@@ -178,7 +178,7 @@ class S3ParquetManager(IOManager):
         self.bucket_name = bucket_name
         self.aws_client = boto3.client("s3")
 
-    def handle_output(self, context, obj: pd.DataFrame):
+    def handle_output(self, context, obj: pl.DataFrame):
         # Define context vars and object key
         asset_name = context.asset_key.path[-1]
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -197,7 +197,7 @@ class S3ParquetManager(IOManager):
         except (S3Error, Exception) as e:
             raise e
 
-    def load_input(self, context) -> pd.DataFrame:
+    def load_input(self, context) -> pl.DataFrame:
         asset_name = context.asset_key.path[-1]
         prefix = f"{asset_name}_"
         try:
@@ -230,7 +230,7 @@ class S3ParquetManager(IOManager):
 
             # Convert Parquet bytes to DataFrame
             parquet_buffer = io.BytesIO(parquet_bytes)
-            df = pd.read_parquet(parquet_buffer)
+            df = pl.read_parquet(parquet_buffer)
 
             context.log.info(
                 f"Loaded latest Parquet file: s3://{self.bucket_name}/{object_key}"
@@ -247,7 +247,6 @@ class S3ParquetManager(IOManager):
                 raise e
         except Exception as e:
             raise e
-
 
 class PartitionedDuckDBParquetManager(IOManager):
     def __init__(self, bucket_name: str):
@@ -390,7 +389,7 @@ class PartitionedDuckDBParquetManager(IOManager):
         base_path = f"s3://{self.bucket_name}/{asset_name}"
 
         try:
-            # Use glob pattern to read all partitions - TBC IF THIS WORKS THOUGH AND IF YOU'D WANT TO DO IT BASED ON THE SIZE!
+            # Use glob pattern to read all partitions - TBC IF THIS WORKS THOUGH
             return self.con.execute(f"""
                 SELECT * FROM read_parquet(
                     '{base_path}/*/*.parquet',
@@ -416,3 +415,72 @@ class PartitionedDuckDBParquetManager(IOManager):
         except Exception as e:
             context.log.error(f"Error loading partition {batch_id} from {partition_path}: {str(e)}")
             raise e
+
+class PolarsDeltaLakeIOManager(IOManager):
+    """
+    IO manager to handle reading and writing delta lake tables to S3 using Polars.
+    Supports AWS credentials from environment variables.
+    """
+
+    def __init__(
+        self,
+        bucket_name: str,
+        region: str = "eu-west-2",
+        storage_options: Optional[Dict[str, Any]] = None
+    ):
+        if not bucket_name:
+            raise S3BucketError()
+
+        self.bucket_name = bucket_name
+        self.region = region
+
+        # Default storage options
+        self.storage_options = {
+            "AWS_REGION": region,
+            "AWS_S3_ALLOW_UNSAFE_RENAME": "true",
+            "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
+            "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
+            "AWS_SESSION_TOKEN": os.getenv("AWS_SESSION_TOKEN")
+        }
+
+        # Override defaults with provided storage options
+        if storage_options:
+            self.storage_options.update(storage_options)
+
+    def handle_output(self, context: OutputContext, obj: pl.DataFrame) -> None:
+        """Write Polars DataFrame to Delta Lake table in S3"""
+        if not isinstance(obj, pl.DataFrame):
+            raise InvalidDataTypeError()
+
+        table_name = context.asset_key.path[-1]
+        table_path = f"s3://{self.bucket_name}/{table_name}/"
+
+        # Get write mode from metadata, default to overwrite
+        write_option = context.definition_metadata["mode"]
+
+        try:
+            obj.write_delta(
+                table_path,
+                mode=write_option, # mode (str, optional) – append (Default), overwrite, ignore, error
+                overwrite_schema=True,
+                storage_options=self.storage_options
+            )
+            context.log.info(f"Successfully wrote data to Delta Lake table at {table_path}")
+
+        except Exception as e:
+            raise DeltaLakeWriteError(f"Failed to write to Delta Lake: {str(e)}")
+
+    def load_input(self, context: InputContext) -> pl.DataFrame:
+        """Read Delta Lake table from S3 into Polars DataFrame"""
+        table_name = context.asset_key.path[-1]
+        table_path = f"s3://{self.bucket_name}/{table_name}/"
+
+        try:
+            df = pl.read_delta(
+                table_path,
+                storage_options=self.storage_options
+            )
+            return df
+
+        except Exception as e:
+            raise DeltaLakeReadError(f"Failed to read from Delta Lake: {str(e)}")

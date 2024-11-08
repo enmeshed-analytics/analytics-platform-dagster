@@ -33,7 +33,8 @@ RUN pip install --no-cache-dir \
     fiona \
     shapely \
     aiohttp \
-    openpyxl
+    openpyxl \
+    polars
 
 # Expose the Dagster daemon port
 EXPOSE 3000

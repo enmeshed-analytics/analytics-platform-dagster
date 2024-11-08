@@ -1,7 +1,7 @@
 """
 This currently only provides data for London only
 """
-import pandas as pd
+import polars as pl
 import io
 
 from pydantic import ValidationError
@@ -28,29 +28,28 @@ def national_charge_point_london_bronze(context: AssetExecutionContext):
         raise ValueError("API_ENDPOINT can't be None")
 
     response = return_json(url)
+
     validation_errors = []
-
-
     try:
         ChargeDevice.model_validate(response)
     except ValidationError as e:
         validation_errors = e.errors()
 
-    df = pd.DataFrame(response)
-    df = df.astype(str)
+    df = pl.DataFrame(response, infer_schema_length=None)
+    df = df.select([pl.col("*").cast(pl.Utf8)])
 
     context.log.info(f"Processed {len(df)} records with {len(validation_errors)} validation errors")
 
     parquet_buffer = io.BytesIO()
-    df.to_parquet(parquet_buffer, engine="pyarrow")
+    df.write_parquet(parquet_buffer)
     parquet_bytes = parquet_buffer.getvalue()
 
-    context.log.info("Successfully processed batch into Parquet format")
+    context.log.info("Successfully processed Parquet into bronze bucket")
     return parquet_bytes
 
 @asset(
     group_name="infrastructure_assets",
-    io_manager_key="DeltaLake",
+    io_manager_key="PolarsDeltaLake",
     metadata={"mode": "overwrite"},
     ins={
         "national_charge_point_london_bronze": AssetIn(
@@ -62,7 +61,7 @@ def national_charge_point_london_bronze(context: AssetExecutionContext):
 @with_slack_notification("National EV Charge Point Data London")
 def national_charge_point_london_silver(
     context: AssetExecutionContext, national_charge_point_london_bronze
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """
     Write charge point data out to Delta Lake
 
@@ -70,7 +69,7 @@ def national_charge_point_london_silver(
         Delta Lake table in S3.
     """
     try:
-        df = pd.DataFrame(national_charge_point_london_bronze)
+        df = pl.DataFrame(national_charge_point_london_bronze)
         return df
 
     except Exception as e:

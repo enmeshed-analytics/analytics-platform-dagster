@@ -1,64 +1,41 @@
-import pandas as pd
+import polars as pl
 from functools import wraps
 import io
 
 def send_slack_silver_success_message(context, df, asset_name):
     """
     Function to send a message to Slack following the successful completion of an Asset.
-
-    Sends formatted string containing df.info information.
-
-    Leverages the AssetExcecuitonContext to access data directly - in this case a Pandas DataFrame.
-
-    Args:
-        context (AssetExecutionContext)
-        df
-        name of the asset
-
+    Sends formatted string containing df.schema and basic stats.
     """
-    # Capture DataFrame info in a string buffer
-    buffer = io.StringIO()
-    df.info(buf=buffer)
-    df_info = buffer.getvalue()
+    # Basic info
+    basic_info = (
+        f"📚 Schema:\n```\n{df.schema}\n```\n\n"
+        f"🔸 Shape: {df.shape[0]:,} rows × {df.shape[1]} columns\n"
+        f"💾 Memory usage: {df.estimated_size() / 1024 / 1024:.2f} MB\n\n"
+    )
 
-    # call the postMessage method.
+    # Combine all information
+    message = (
+        f"✅ *{asset_name}* successfully processed and stored in Silver Bucket.\n\n"
+        f"{basic_info}"
+    )
+
+    # Send the message
     context.resources.slack.get_client().chat_postMessage(
         channel="#pipelines",
-        text=f"{asset_name} successfully processed and stored in Silver Bucket.\n"
-             f"Data Overview:\n```\n{df_info}\n```"
+        text=message
     )
 
 def with_slack_notification(asset_name):
     """
     Wrapper to create a slack message decorator for an asset.
-
-    This will only send a message if the return is successful.
-
-    Otherwise the function completes and no message is sent.
-
-    For example (not full code snippet):
-
-    import pandas as pd
-    from dagster import asset, AssetIn, AssetExecutionContext
-    from ...utils.slack_messages.slack_message import with_slack_notification
-
-        @asset(
-            group_name="energy_assets",
-            io_manager_key="DeltaLake",
-            metadata={"mode": "overwrite"},
-            ins={"entsog_gas_uk_data_bronze": AssetIn("entsog_gas_uk_data_bronze")},
-            required_resource_keys={"slack"}
-        )
-        @with_slack_notification("ENTSOG Gas UK data")
-        def entsog_gas_uk_data_silver(context: AssetExecutionContext, entsog_gas_uk_data_bronze):
-            etc...
-
+    Works with Polars DataFrames.
     """
     def slack_df_success_decorator(func):
         @wraps(func)
         def wrapper(context, *args, **kwargs):
             result = func(context, *args, **kwargs)
-            if isinstance(result, pd.DataFrame):
+            if isinstance(result, pl.DataFrame):
                 send_slack_silver_success_message(context, result, asset_name)
             return result
         return wrapper

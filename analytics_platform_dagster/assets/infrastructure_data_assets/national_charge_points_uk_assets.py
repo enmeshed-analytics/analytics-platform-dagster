@@ -1,7 +1,7 @@
 """Chargepoint Data for all of UK"""
 import requests
 import pyarrow as pa
-import pandas as pd
+import polars as pl
 import io
 
 from typing import List, Dict, Any
@@ -221,15 +221,14 @@ def national_charge_point_uk_bronze(context: AssetExecutionContext):
 
         prepared_data = prepare_batch_data(data['ChargeDevice'])
 
-        df = pd.DataFrame(prepared_data)
-        df = df.astype(str)
+        df = pl.DataFrame(prepared_data, infer_schema_length=None)
         context.log.info(f"Processed {len(df)} records with {len(validation_errors)} validation errors")
 
         parquet_buffer = io.BytesIO()
-        df.to_parquet(parquet_buffer, engine="pyarrow")
+        df.write_parquet(parquet_buffer)
         parquet_bytes = parquet_buffer.getvalue()
 
-        context.log.info("Successfully processed batch into Parquet format")
+        context.log.info("Successfully processed Parquet into bronze bucket")
         return parquet_bytes
 
     except Exception as e:
@@ -238,7 +237,7 @@ def national_charge_point_uk_bronze(context: AssetExecutionContext):
 
 @asset(
     group_name="infrastructure_assets",
-    io_manager_key="DeltaLake",
+    io_manager_key="PolarsDeltaLake",
     metadata={"mode": "overwrite"},
     ins={
         "national_charge_point_uk_bronze": AssetIn(
@@ -250,7 +249,7 @@ def national_charge_point_uk_bronze(context: AssetExecutionContext):
 @with_slack_notification("National EV Charge Point Data UK")
 def national_charge_point_uk_silver(
     context: AssetExecutionContext, national_charge_point_uk_bronze
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """
     Write charge point data out to Delta Lake
 
@@ -258,7 +257,7 @@ def national_charge_point_uk_silver(
         Delta Lake table in S3.
     """
     try:
-        df = pd.DataFrame(national_charge_point_uk_bronze)
+        df = pl.DataFrame(national_charge_point_uk_bronze)
         return df
 
     except Exception as e:

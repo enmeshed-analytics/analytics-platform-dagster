@@ -1,6 +1,6 @@
 import aiohttp
 import asyncio
-import pandas as pd
+import polars as pl
 import io
 
 from datetime import datetime
@@ -60,9 +60,9 @@ async def fetch_all_data_async():
             region_data[f"generationmix_{item.fuel}"] = item.perc
         data.append(region_data)
 
-    df = pd.DataFrame(data)
+    df = pl.DataFrame(data)
     parquet_buffer = io.BytesIO()
-    df.to_parquet(parquet_buffer, engine="pyarrow")
+    df.write_parquet(parquet_buffer)
     parquet_bytes = parquet_buffer.getvalue()
 
     return parquet_bytes
@@ -81,7 +81,7 @@ def carbon_intensity_bronze(context: AssetExecutionContext):
 
 @asset(
     group_name="energy_assets",
-    io_manager_key="DeltaLake",
+    io_manager_key="PolarsDeltaLake",
     metadata={"mode": "overwrite"},
     ins={"carbon_intensity_bronze": AssetIn("carbon_intensity_bronze")},
     required_resource_keys={"slack"}
@@ -94,8 +94,9 @@ def carbon_intensity_silver(context: AssetExecutionContext, carbon_intensity_bro
     Rename columns and add additonal information.
     """
     data = carbon_intensity_bronze
+
     data = data.rename(
-        columns={
+        {
             "regionid": "region_id",
             "dnoregion": "dno_region",
             "shortname": "short_name",
@@ -104,16 +105,7 @@ def carbon_intensity_silver(context: AssetExecutionContext, carbon_intensity_bro
         }
     )
 
-    # Add date_processed column
-    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    data["date_processed"] = current_time
-
-    # Add asset_group column
-    asset_group = context.assets_def.group_names_by_key[context.asset_key]
-    context.log.info(f"Asset group: {asset_group}")
-    data["asset_group"] = asset_group
-
-    # Print info
     context.log.info(f"{data.head(10)}")
     context.log.info(f"{data.columns}")
+
     return data
