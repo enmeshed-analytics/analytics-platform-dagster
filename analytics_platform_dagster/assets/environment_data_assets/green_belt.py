@@ -1,12 +1,8 @@
 import requests
 import polars as pl
-import pandas as pd
-import os
 import io
-from typing import List, Dict, Any
 from pydantic import ValidationError
 
-from analytics_platform_dagster.assets.environment_data_assets import green_belt
 from ...utils.variables_helper.url_links import asset_urls
 from dagster import AssetExecutionContext, asset, AssetIn
 from ...utils.slack_messages.slack_message import with_slack_notification

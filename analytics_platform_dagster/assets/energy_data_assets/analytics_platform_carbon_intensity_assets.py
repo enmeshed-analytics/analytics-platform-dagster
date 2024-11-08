@@ -3,7 +3,6 @@ import asyncio
 import polars as pl
 import io
 
-from datetime import datetime
 from dagster import asset, AssetExecutionContext, AssetIn
 from ...models.energy_data_models.carbon_intensity_assets_model import (
     CarbonIntensityResponse,

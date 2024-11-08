@@ -1,5 +1,4 @@
 import requests
-import json
 import polars as pl
 import io
 
@@ -27,7 +26,7 @@ def london_datastore_bronze(context: AssetExecutionContext):
 
         validation_errors = []
         try:
-            validated = LondonDatastoreCatalogue.model_validate({"items": data})
+            LondonDatastoreCatalogue.model_validate({"items": data})
         except ValidationError as e:
             validation_errors = e.errors()
 

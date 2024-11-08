@@ -1,6 +1,5 @@
 import polars as pl
 from functools import wraps
-import io
 
 def send_slack_silver_success_message(context, df, asset_name):
     """
