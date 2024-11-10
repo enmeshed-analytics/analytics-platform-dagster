@@ -6,7 +6,6 @@ import pandas as pd
 import polars as pl
 import duckdb
 import pyarrow as pa
-import os
 
 from datetime import datetime
 from typing import List, Dict, Union, Any, Optional
@@ -484,9 +483,6 @@ class PolarsDeltaLakeIOManager(IOManager):
 
         table_name = context.asset_key.path[-1]
         table_path = f"s3://{self.bucket_name}/{table_name}/"
-
-        # Get write mode from metadata, default to overwrite
-        write_option = context.definition_metadata.get("mode", "overwrite")
 
         try:
             obj.write_delta(
