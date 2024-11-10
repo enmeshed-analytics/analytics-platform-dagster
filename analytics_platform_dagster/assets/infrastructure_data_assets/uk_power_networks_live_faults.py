@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import polars as pl
 
 from io import BytesIO
 from pydantic import TypeAdapter, ValidationError
@@ -57,10 +58,9 @@ def ukpn_live_faults_bronze():
         raise e
 
     parquet_buffer = BytesIO()
-    df.to_parquet(parquet_buffer, engine="pyarrow")
-    df = df.astype(str)
+    polars_df = pl.from_pandas(df)
+    polars_df.write_parquet(parquet_buffer)
     parquet_bytes = parquet_buffer.getvalue()
-
     return parquet_bytes
 
 @asset(

@@ -36,7 +36,6 @@ def national_charge_point_london_bronze(context: AssetExecutionContext):
         validation_errors = e.errors()
 
     df = pl.DataFrame(response, infer_schema_length=None)
-    df = df.select([pl.col("*").cast(pl.Utf8)])
 
     context.log.info(f"Processed {len(df)} records with {len(validation_errors)} validation errors")
 

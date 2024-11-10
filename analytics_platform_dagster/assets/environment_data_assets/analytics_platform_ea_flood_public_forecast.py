@@ -92,6 +92,6 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
             if source.ground:
                 output["ground_risk"] = source.ground
 
-        df = pl.DataFrame([output])
+        df = pl.DataFrame(output)
 
         return df

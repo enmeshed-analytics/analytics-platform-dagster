@@ -31,7 +31,8 @@ def ea_flood_areas_bronze(context: AssetExecutionContext):
         except ValidationError as e:
             validation_errors = e.errors()
 
-        df = pl.DataFrame(result)
+        data = result["items"]
+        df = pl.DataFrame(data)
 
         context.log.info(f"Processed {len(df)} records with {len(validation_errors)} validation errors")
 
@@ -61,8 +62,7 @@ def ea_flood_areas_silver(context: AssetExecutionContext, ea_flood_areas_bronze)
 
     if data:
         try:
-            items = data["items"]
-            df = pl.DataFrame(items)
+            df = pl.DataFrame(data)
             context.log.info(f"Success: {df.head(25)}, {df.columns}, {df.shape}")
             context.log.info(f"Success: {df.columns}, {df.shape}")
             context.log.info(f"Success: {df.shape}")
