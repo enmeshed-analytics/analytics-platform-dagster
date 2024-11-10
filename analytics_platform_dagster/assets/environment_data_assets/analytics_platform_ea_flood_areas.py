@@ -60,12 +60,11 @@ def ea_flood_areas_silver(context: AssetExecutionContext, ea_flood_areas_bronze)
 
     data = ea_flood_areas_bronze
 
-    if data:
-        try:
-            df = pl.DataFrame(data)
-            context.log.info(f"Success: {df.head(25)}, {df.columns}, {df.shape}")
-            context.log.info(f"Success: {df.columns}, {df.shape}")
-            context.log.info(f"Success: {df.shape}")
-            return df
-        except Exception as e:
-            raise e
+    try:
+        df = pl.DataFrame(data)
+        context.log.info(f"Success: {df.head(25)}, {df.columns}, {df.shape}")
+        context.log.info(f"Success: {df.columns}, {df.shape}")
+        context.log.info(f"Success: {df.shape}")
+        return df
+    except Exception as e:
+        raise e

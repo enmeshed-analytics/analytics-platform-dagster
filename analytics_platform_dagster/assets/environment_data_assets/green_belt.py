@@ -68,5 +68,5 @@ def green_belt_silver(context: AssetExecutionContext, green_belt_bronze)  -> pl.
     """
     Write green belt data directly to S3 using Polars
     """
-    df = pl.DataFrame(green_belt_bronze)
+    df = green_belt_bronze
     return df

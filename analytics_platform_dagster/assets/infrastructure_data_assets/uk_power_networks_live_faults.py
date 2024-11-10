@@ -65,7 +65,7 @@ def ukpn_live_faults_bronze():
 
 @asset(
     group_name="infrastructure_assets",
-    io_manager_key="DeltaLake",
+    io_manager_key="PolarsDeltaLake",
     metadata={"mode": "overwrite"},
     ins={"ukpn_live_faults_bronze": AssetIn("ukpn_live_faults_bronze")},
     required_resource_keys={"slack"}
@@ -78,10 +78,6 @@ def ukpn_live_faults_silver(context: AssetExecutionContext, ukpn_live_faults_bro
     Rename columns and add additonal information.
     """
     data = ukpn_live_faults_bronze
-
-    # Add date_processed column
-    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    data["date_processed"] = current_time
 
     # Check info
     context.log.info(f"{data.head(10)}")

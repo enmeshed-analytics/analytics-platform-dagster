@@ -61,37 +61,36 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
     # Load data into model - to use dot notation further down
     flood_risk_data = FloodRiskData.model_validate(data)
 
-    if flood_risk_data:
-        statement = flood_risk_data.statement
+    statement = flood_risk_data.statement
 
-        # Retrieve values using dot notation from the model
-        output = {
-            "area_of_concern": statement.area_of_concern_url,
-            "headline": statement.headline,
-            "pdf_report": statement.pdf_url,
-            "issued_at": statement.issued_at,
-            "next_issue_due": statement.next_issue_due_at,
-            "flood_risk_day1": statement.flood_risk_trend.day1,
-            "flood_risk_day2": statement.flood_risk_trend.day2,
-            "flood_risk_day3": statement.flood_risk_trend.day3,
-            "flood_risk_day4": statement.flood_risk_trend.day4,
-            "flood_risk_day5": statement.flood_risk_trend.day5,
-            "england_forecast": statement.public_forecast.england_forecast,
-            "wales_forecast_english": statement.public_forecast.wales_forecast_english,
-            "risks_areas": statement.risk_areas
-        }
+    # Retrieve values using dot notation from the model
+    output = {
+        "area_of_concern": statement.area_of_concern_url,
+        "headline": statement.headline,
+        "pdf_report": statement.pdf_url,
+        "issued_at": statement.issued_at,
+        "next_issue_due": statement.next_issue_due_at,
+        "flood_risk_day1": statement.flood_risk_trend.day1,
+        "flood_risk_day2": statement.flood_risk_trend.day2,
+        "flood_risk_day3": statement.flood_risk_trend.day3,
+        "flood_risk_day4": statement.flood_risk_trend.day4,
+        "flood_risk_day5": statement.flood_risk_trend.day5,
+        "england_forecast": statement.public_forecast.england_forecast,
+        "wales_forecast_english": statement.public_forecast.wales_forecast_english,
+        "risks_areas": statement.risk_areas
+    }
 
-        # Access nested values
-        for source in statement.sources:
-            if source.coastal:
-                output["coastal_risk"] = source.coastal
-            if source.surface:
-                output["surface_risk"] = source.surface
-            if source.river:
-                output["river_risk"] = source.river
-            if source.ground:
-                output["ground_risk"] = source.ground
+    # Access nested values
+    for source in statement.sources:
+        if source.coastal:
+            output["coastal_risk"] = source.coastal
+        if source.surface:
+            output["surface_risk"] = source.surface
+        if source.river:
+            output["river_risk"] = source.river
+        if source.ground:
+            output["ground_risk"] = source.ground
 
-        df = pl.DataFrame(output)
+    df = pl.DataFrame(output)
 
-        return df
+    return df
