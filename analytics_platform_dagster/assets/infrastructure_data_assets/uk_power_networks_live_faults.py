@@ -7,7 +7,6 @@ from pydantic import TypeAdapter, ValidationError
 from typing import List
 from ...models.infrastructure_data_models.ukpn_live_fault_model import UKPNLiveFault
 from dagster import AssetExecutionContext, AssetIn, asset, op
-from datetime import datetime
 from ...utils.slack_messages.slack_message import with_slack_notification
 from ...utils.variables_helper.url_links import asset_urls
 
