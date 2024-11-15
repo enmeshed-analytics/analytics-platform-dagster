@@ -57,7 +57,7 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
     EA Public Forecast flooding data silver bucket - flattens nested JSON structure
     """
     # Extract the statement data
-    statement = ea_flood_public_forecast_bronze['statement']
+    statement = ea_flood_public_forecast_bronze['statement'].to_dict()
 
     # Create base output dictionary with top-level fields
     output = {
