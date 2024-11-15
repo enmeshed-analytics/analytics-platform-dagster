@@ -30,7 +30,9 @@ def ea_flood_public_forecast_bronze(context: AssetExecutionContext):
             validation_errors = e.errors()
 
         df = pl.DataFrame(data)
+
         context.log.info(f"Processed {len(df)} records with {len(validation_errors)} validation errors")
+        context.log.info(f"{df.head(5)}")
 
         parquet_buffer = io.BytesIO()
         df.write_parquet(parquet_buffer)
@@ -54,8 +56,12 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
     """
     EA Public Forecast flooding data silver bucket
     """
+
+    data = ea_flood_public_forecast_bronze.to_dict()
+    print(data)
+
     # Load data into model
-    flood_risk_data = FloodRiskData.model_validate(ea_flood_public_forecast_bronze.to_dict())
+    flood_risk_data = FloodRiskData.model_validate(data)
 
     # Create flattened dictionary structure
     output = {
