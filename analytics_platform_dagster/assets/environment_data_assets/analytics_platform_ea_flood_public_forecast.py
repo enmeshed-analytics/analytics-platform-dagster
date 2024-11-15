@@ -56,60 +56,61 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
     """
     EA Public Forecast flooding data silver bucket - flattens nested JSON structure
     """
-    # Debug print to see what we're working with
-    context.log.info(f"Input type: {type(ea_flood_public_forecast_bronze)}")
-    context.log.info(f"Input data: {ea_flood_public_forecast_bronze}")
-
-    # For Polars DataFrame, extract the statement column
-    if isinstance(ea_flood_public_forecast_bronze, pl.DataFrame):
-        # Get the first row since we expect only one record
-        statement = ea_flood_public_forecast_bronze.select('statement').item()
-        context.log.info(f"Statement data:, {statement}")
-    else:
-        statement = ea_flood_public_forecast_bronze['statement']
-        context.log.info(f"Statement data: {statement}")
+    # Get the statement data
+    statement = ea_flood_public_forecast_bronze.select('statement').item()
 
     # Create base output dictionary with top-level fields
     output = {
-        "area_of_concern_url": statement['area_of_concern_url'],
-        "headline": statement['headline'],
-        "pdf_url": statement['pdf_url'],
-        "issued_at": statement['issued_at'],
-        "next_issue_due_at": statement['next_issue_due_at'],
+        "area_of_concern_url": statement['area_of_concern_url'] or "",  # Convert None to empty string
+        "headline": statement['headline'] or "",
+        "pdf_url": statement['pdf_url'] or "",
+        "issued_at": statement['issued_at'] or "",
+        "next_issue_due_at": statement['next_issue_due_at'] or "",
     }
 
     # Add flood risk trend data
     risk_trend = statement['flood_risk_trend']
     output.update({
-        "flood_risk_day1": risk_trend['day1'],
-        "flood_risk_day2": risk_trend['day2'],
-        "flood_risk_day3": risk_trend['day3'],
-        "flood_risk_day4": risk_trend['day4'],
-        "flood_risk_day5": risk_trend['day5']
+        "flood_risk_day1": risk_trend['day1'] or "",
+        "flood_risk_day2": risk_trend['day2'] or "",
+        "flood_risk_day3": risk_trend['day3'] or "",
+        "flood_risk_day4": risk_trend['day4'] or "",
+        "flood_risk_day5": risk_trend['day5'] or ""
     })
 
     # Add public forecast data
     public_forecast = statement['public_forecast']
     output.update({
-        "england_forecast": public_forecast['england_forecast'],
-        "wales_forecast_english": public_forecast['wales_forecast_english']
+        "england_forecast": public_forecast['england_forecast'] or "",
+        "wales_forecast_english": public_forecast['wales_forecast_english'] or ""
+    })
+
+    # Initialize source fields with empty strings
+    output.update({
+        "coastal_risk": "",
+        "surface_risk": "",
+        "river_risk": "",
+        "ground_risk": ""
     })
 
     # Add source data
     for source in statement['sources']:
-        if 'coastal' in source:
+        if source.get('coastal'):
             output['coastal_risk'] = source['coastal']
-        if 'surface' in source:
+        if source.get('surface'):
             output['surface_risk'] = source['surface']
-        if 'river' in source:
+        if source.get('river'):
             output['river_risk'] = source['river']
-        if 'ground' in source:
+        if source.get('ground'):
             output['ground_risk'] = source['ground']
 
-    # Add risk areas
-    output['risk_areas'] = statement['risk_areas']
+    # Convert risk areas to string to avoid nested structure issues
+    risk_areas = statement.get('risk_areas', [])
+    output['risk_areas'] = str(risk_areas) if risk_areas else ""
 
-    # Convert to DataFrame
-    df = pl.DataFrame([output])
+    # Convert to DataFrame and ensure string types for all columns
+    df = pl.DataFrame([output]).with_columns([
+        pl.col('*').cast(pl.String)
+    ])
 
     return df
