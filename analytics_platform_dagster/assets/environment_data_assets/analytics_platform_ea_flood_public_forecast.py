@@ -57,17 +57,17 @@ def ea_flood_public_forecast_silver(context: AssetExecutionContext, ea_flood_pub
     EA Public Forecast flooding data silver bucket - flattens nested JSON structure
     """
     # Debug print to see what we're working with
-    context.log.info("Input type:", type(ea_flood_public_forecast_bronze))
-    context.log.info("Input data:", ea_flood_public_forecast_bronze)
+    context.log.info(f"Input type: {type(ea_flood_public_forecast_bronze)}")
+    context.log.info(f"Input data: {ea_flood_public_forecast_bronze}")
 
     # For Polars DataFrame, extract the statement column
     if isinstance(ea_flood_public_forecast_bronze, pl.DataFrame):
         # Get the first row since we expect only one record
         statement = ea_flood_public_forecast_bronze.select('statement').item()
-        context.log.info("Statement data:", statement)
+        context.log.info(f"Statement data:, {statement}")
     else:
         statement = ea_flood_public_forecast_bronze['statement']
-        context.log.info("Statement data:", statement)
+        context.log.info(f"Statement data: {statement}")
 
     # Create base output dictionary with top-level fields
     output = {
