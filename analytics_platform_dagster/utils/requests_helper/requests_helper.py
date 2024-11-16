@@ -44,7 +44,6 @@ def stream_json(url: str, set_chunk: int):
         print(f"An error occurred: {error}")
         raise
 
-import requests
 
 def fetch_redirect_url(url) -> str:
     """

@@ -6,7 +6,6 @@ import polars as pl
 import fiona
 import io
 
-from typing import List, Dict
 from shapely import wkt
 from shapely.geometry import shape
 from dagster import AssetExecutionContext, Output, asset
