@@ -8,19 +8,24 @@ from .assets.environment_data_assets import (
     green_belt
 )
 from .assets.trade_data_assets import analytics_platform_dbt_trade_barrier_assets
+
 from .assets.energy_data_assets import (
     analytics_platform_carbon_intensity_assets,
     entsog_uk_gas_assets,
 )
 from .assets.catalogue_metadata_assets import analytics_platform_datastore_assets
+
 from .assets.infrastructure_data_assets import (
     national_charge_points_london_assets,
     uk_power_networks_live_faults,
     national_charge_points_uk_assets
 )
 
+from .assets.location_data_assets import built_up_areas
+
 from .utils.io_manager_helper.io_manager import (
     S3ParquetManager,
+    S3ParquetManagerPartition,
     AwsWranglerDeltaLakeIOManager,
     S3JSONManager,
     PartitionedDuckDBParquetManager,
@@ -41,7 +46,8 @@ from .jobs.analytics_platfom_jobs import (
     infrastructure_job_1,
     infrastructure_job_1_weekly,
     infrastructure_job_2,
-    infrastructure_job_2_daily
+    infrastructure_job_2_daily,
+    location_job_1
 )
 
 
@@ -80,7 +86,8 @@ defs = Definitions(
             entsog_uk_gas_assets,
             uk_power_networks_live_faults,
             national_charge_points_uk_assets,
-            green_belt
+            green_belt,
+            built_up_areas
         ]
     ),
     jobs=[
@@ -90,7 +97,8 @@ defs = Definitions(
         metadata_job_1,
         energy_job_1,
         infrastructure_job_1,
-        infrastructure_job_2
+        infrastructure_job_2,
+        location_job_1
     ],
     schedules=[
         energy_job_1_daily,
@@ -104,6 +112,7 @@ defs = Definitions(
     sensors=[slack_failure_sensor],
     resources={
         "S3Parquet": S3ParquetManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
+        "S3ParquetPartition": S3ParquetManagerPartition(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "S3Json": S3JSONManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "PartitionedDuckDBManager": PartitionedDuckDBParquetManager(bucket_name=get_env_var("BRONZE_DATA_BUCKET")),
         "DeltaLake": AwsWranglerDeltaLakeIOManager(bucket_name=get_env_var("SILVER_DATA_BUCKET")),

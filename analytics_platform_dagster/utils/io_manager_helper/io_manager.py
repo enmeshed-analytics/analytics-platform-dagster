@@ -248,6 +248,105 @@ class S3ParquetManager(IOManager):
         except Exception as e:
             raise e
 
+class S3ParquetManagerPartition(IOManager):
+    """
+    IO manager to handle reading and writing parquet bytes to S3.
+    """
+    def __init__(self, bucket_name: str):
+        if not bucket_name:
+            raise S3BucketError()
+        self.bucket_name = bucket_name
+        self.aws_client = boto3.client("s3")
+
+    def handle_output(self, context, obj):
+        # Define base variables
+        asset_name = context.asset_key.path[-1]
+        batch_number = 0
+
+        # Handle generator of parquet bytes
+        if hasattr(obj, '__iter__'):
+            for batch_bytes in obj:
+                batch_number += 1
+                timestamp = datetime.now().strftime("%Y%m%d")
+                object_key = f"{asset_name}/batch_{timestamp}_{batch_number:04d}.parquet"
+
+                # Upload bytes to S3
+                try:
+                    self.aws_client.put_object(
+                        Bucket=self.bucket_name,
+                        Key=object_key,
+                        Body=batch_bytes,
+                        ContentType="application/octet-stream",
+                    )
+                    context.log.info(
+                        f"Batch {batch_number} written to S3 at s3://{self.bucket_name}/{object_key}"
+                    )
+                except Exception as e:
+                    raise e
+        else:
+            # Handle single batch case
+            timestamp = datetime.now().strftime("%Y%m%d")
+            object_key = f"{asset_name}/batch_{timestamp}.parquet"
+
+            try:
+                self.aws_client.put_object(
+                    Bucket=self.bucket_name,
+                    Key=object_key,
+                    Body=obj,
+                    ContentType="application/octet-stream",
+                )
+                context.log.info(
+                    f"Data written to S3 at s3://{self.bucket_name}/{object_key}"
+                )
+            except Exception as e:
+                raise e
+
+    def load_input(self, context) -> pl.DataFrame:
+        asset_name = context.asset_key.path[-1]
+        prefix = f"{asset_name}/data/batch_"
+        try:
+            # List objects in the bucket with the given prefix
+            response = self.aws_client.list_objects_v2(
+                Bucket=self.bucket_name, Prefix=prefix
+            )
+
+            if "Contents" not in response or not response["Contents"]:
+                raise FileNotFoundError(
+                    f"No files found with prefix '{prefix}' in bucket '{self.bucket_name}'"
+                )
+
+            # Sort the objects by last modified date
+            sorted_objects = sorted(
+                response["Contents"], key=lambda x: x["LastModified"], reverse=True
+            )
+
+            # Load all batches and concatenate
+            dfs = []
+            for obj in sorted_objects:
+                object_key = obj["Key"]
+                response = self.aws_client.get_object(
+                    Bucket=self.bucket_name, Key=object_key
+                )
+                parquet_bytes = response["Body"].read()
+                df = pl.read_parquet(io.BytesIO(parquet_bytes))
+                dfs.append(df)
+                context.log.info(f"Loaded batch from: {object_key}")
+
+            # Concatenate all dataframes
+            final_df = pl.concat(dfs)
+            context.log.info(f"Concatenated {len(dfs)} batches")
+            return final_df
+
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                raise FileNotFoundError(
+                    f"No files found with prefix '{prefix}' in bucket '{self.bucket_name}'"
+                )
+            else:
+                raise e
+        except Exception as e:
+            raise e
+
 class PartitionedDuckDBParquetManager(IOManager):
     def __init__(self, bucket_name: str):
         self.bucket_name = bucket_name

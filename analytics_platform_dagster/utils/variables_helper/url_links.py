@@ -9,4 +9,5 @@ asset_urls = {
     "ukpn_live_faults": "https://ukpowernetworks.opendatasoft.com/api/explore/v2.1/catalog/datasets/ukpn-live-faults/exports/xlsx",
     "green_belt": "https://files.planning.data.gov.uk/dataset/green-belt.json",
     "entsog_gas": "https://transparency.entsog.eu/api/v1/operationalData.json",
+    "os_built_up_areas": "https://api.os.uk/downloads/v1/products/BuiltUpAreas/downloads?area=GB&format=GeoPackage&redirect"
 }

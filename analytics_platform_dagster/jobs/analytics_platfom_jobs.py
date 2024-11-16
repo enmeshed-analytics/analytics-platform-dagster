@@ -114,3 +114,11 @@ infrastructure_job_2_daily = ScheduleDefinition(
     execution_timezone="Europe/London",
     name="infrastructure_daily_schedule",
 )
+
+# LOCATION
+location_job_1 = define_asset_job(
+    name="location_job_1",
+    selection=[
+        "os_built_up_areas_bronze"
+    ]
+)

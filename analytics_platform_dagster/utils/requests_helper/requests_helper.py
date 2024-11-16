@@ -43,3 +43,23 @@ def stream_json(url: str, set_chunk: int):
     except requests.RequestException as error:
         print(f"An error occurred: {error}")
         raise
+
+import requests
+
+def fetch_redirect_url(url) -> str:
+    """
+    Call the redirect url and then fetch the actual download url.
+    """
+
+    if url is None:
+        raise ValueError("url is empty")
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        redirect_url = response.url
+        print(f"The Redirect URL is: {redirect_url}")
+    except (requests.exceptions.RequestException, ValueError, Exception) as e:
+        print(f"An error retrieving the redirect URL: {e}")
+        raise
+    return redirect_url
