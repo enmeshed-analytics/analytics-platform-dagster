@@ -25,4 +25,6 @@ Data Lake setup for Enmeshed!
 > Run <Streamlit run streamlit_app/main.py>
 
 ## Current Architecture
-![Untitled-2024-09-24-1622-2](https://github.com/user-attachments/assets/ba0350e4-a605-4a1b-bd9c-df302955d314)
+![Screenshot 2024-11-16 at 14 38 12](https://github.com/user-attachments/assets/2b72793a-517c-4dce-aa1d-2597a46708ef)
+
+
