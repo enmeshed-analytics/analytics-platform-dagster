@@ -12,8 +12,9 @@ from .assets.trade_data_assets import analytics_platform_dbt_trade_barrier_asset
 from .assets.energy_data_assets import (
     analytics_platform_carbon_intensity_assets,
     entsog_uk_gas_assets,
+    ukpn_smart_metres
 )
-from .assets.catalogue_metadata_assets import analytics_platform_datastore_assets
+from .assets.catalogue_metadata_assets import london_datastore, ukpn_datastore_roadmap
 
 from .assets.infrastructure_data_assets import (
     national_charge_points_london_assets,
@@ -77,7 +78,8 @@ slack_failure_sensor = make_slack_on_run_failure_sensor(
 defs = Definitions(
     assets=load_assets_from_modules(
         [
-            analytics_platform_datastore_assets,
+            london_datastore,
+            ukpn_datastore_roadmap,
             analytics_platform_ea_flood_areas,
             analytics_platform_ea_flood_public_forecast,
             analytics_platform_dbt_trade_barrier_assets,
@@ -87,7 +89,8 @@ defs = Definitions(
             uk_power_networks_live_faults,
             national_charge_points_uk_assets,
             green_belt,
-            built_up_areas
+            built_up_areas,
+            ukpn_smart_metres
         ]
     ),
     jobs=[
