@@ -20,6 +20,10 @@ class BronzeETLBase:
         """Check if URL points to an Excel file"""
         return any(url.lower().endswith(ext) for ext in ['.xlsx', '.xls', '.xlsm'])
 
+    def _is_csv_url(self, url:str) -> bool:
+        return any(url.lower().endswith(ext) for ext in ['.csv'])
+
+
     def _process_excel_response(self, response: bytes, sheet_name: Optional[str] = None) -> Dict:
         """Process Excel file from response bytes using Polars"""
         try:
@@ -108,7 +112,7 @@ def bronze_asset_factory(
         def wrapper(context: AssetExecutionContext) -> bytes:
             etl = BronzeETLBase(url_key, asset_urls)
             try:
-                # Fetch data (now supports Excel with Polars)
+                # Fetch data
                 data = etl.fetch_data(sheet_name=sheet_name)
 
                 # Validate data only if model is provided
