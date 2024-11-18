@@ -34,7 +34,8 @@ RUN pip install --no-cache-dir \
     shapely \
     aiohttp \
     openpyxl \
-    polars
+    polars \
+    fastexcel
 
 # Expose the Dagster webserver port
 EXPOSE 3000

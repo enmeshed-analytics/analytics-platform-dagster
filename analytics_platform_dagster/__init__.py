@@ -12,14 +12,16 @@ from .assets.trade_data_assets import analytics_platform_dbt_trade_barrier_asset
 from .assets.energy_data_assets import (
     analytics_platform_carbon_intensity_assets,
     entsog_uk_gas_assets,
-    ukpn_smart_metres
+    ukpn_smart_metres,
+    renewable_energy_planning
 )
 from .assets.catalogue_metadata_assets import london_datastore, ukpn_datastore_roadmap
 
 from .assets.infrastructure_data_assets import (
     national_charge_points_london_assets,
     uk_power_networks_live_faults,
-    national_charge_points_uk_assets
+    national_charge_points_uk_assets,
+    uk_heat_networks
 )
 
 from .assets.location_data_assets import built_up_areas
@@ -90,7 +92,9 @@ defs = Definitions(
             national_charge_points_uk_assets,
             green_belt,
             built_up_areas,
-            ukpn_smart_metres
+            ukpn_smart_metres,
+            renewable_energy_planning,
+            uk_heat_networks
         ]
     ),
     jobs=[
