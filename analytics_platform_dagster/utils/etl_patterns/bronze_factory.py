@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 import polars as pl
 import requests
 import io
@@ -6,7 +6,6 @@ from pydantic import BaseModel, ValidationError
 from dagster import AssetExecutionContext
 from functools import wraps
 from builtins import bytes
-from pathlib import Path
 
 T = TypeVar('T', bound=BaseModel)
 
